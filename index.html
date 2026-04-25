@@ -77,11 +77,9 @@ tr:hover td{background:var(--bg2)}
 
 /* TOOLTIPS */
 .info-btn{display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;border-radius:50%;border:0.5px solid var(--border2);background:var(--bg3);color:var(--muted);font-size:10px;cursor:pointer;flex-shrink:0;font-style:normal;line-height:1;transition:all .15s}
-.info-btn:hover{background:var(--blue-light);border-color:var(--blue);color:var(--blue)}
-.tooltip-wrap{position:relative;display:inline-block}
-.tooltip-box{display:none;position:absolute;left:20px;top:-4px;z-index:100;background:var(--bg);border:0.5px solid var(--border2);border-radius:var(--radius-lg);padding:10px 14px;width:280px;font-size:12px;color:var(--text);line-height:1.5;box-shadow:0 4px 16px rgba(0,0,0,0.12)}
-.tooltip-box strong{display:block;font-size:11px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px}
-.tooltip-wrap:hover .tooltip-box,.tooltip-wrap:focus-within .tooltip-box{display:block}
+.info-btn:hover,.info-btn.active{background:var(--blue-light);border-color:var(--blue);color:var(--blue)}
+#global-tooltip{display:none;position:fixed;z-index:999;background:var(--bg);border:0.5px solid var(--border2);border-radius:var(--radius-lg);padding:10px 14px;width:280px;font-size:12px;color:var(--text);line-height:1.5;box-shadow:0 4px 20px rgba(0,0,0,0.14);pointer-events:none}
+#global-tooltip strong{display:block;font-size:11px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px}
 
 /* MISC */
 .legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-bottom:10px}
@@ -104,6 +102,7 @@ tr:hover td{background:var(--bg2)}
 </style>
 </head>
 <body>
+<div id="global-tooltip"></div>
 <div class="container">
 <header>
   <h1>Finančni pregled košarkarskih klubov</h1>
@@ -281,9 +280,8 @@ const pctOf= (a,b) => b>0?(a/b*100).toFixed(1)+'%':'—';
 const dc   = id => { if(charts[id]){charts[id].destroy();delete charts[id];} };
 
 function tooltip(key){
-  const o=OPISI[key];
-  if(!o) return '';
-  return `<span class="tooltip-wrap"><i class="info-btn">i</i><span class="tooltip-box"><strong>${o.naslov}</strong>${o.opis}</span></span>`;
+  if(!OPISI[key]) return '';
+  return `<i class="info-btn" onmouseenter="showTip(event,'${key}')" onmouseleave="hideTip()">i</i>`;
 }
 
 /* FILTER INIT */
@@ -500,6 +498,40 @@ function renderKlub(){
     data:{labels:CAT_DEFS.map(c=>c.label),datasets:[{data:pieV,backgroundColor:CAT_DEFS.map(c=>c.color),borderWidth:1}]},
     options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{font:{size:12},boxWidth:12}}}}});
 }
+
+/* TOOLTIP JS */
+const gtip=document.createElement('div');
+gtip.id='global-tooltip';
+document.body.prepend(gtip);
+
+function showTip(e,key){
+  const o=OPISI[key];
+  if(!o) return;
+  const t=document.getElementById('global-tooltip');
+  t.innerHTML=`<strong>${o.naslov}</strong>${o.opis}`;
+  t.style.display='block';
+  positionTip(e);
+  e.target.classList.add('active');
+}
+function hideTip(){
+  document.getElementById('global-tooltip').style.display='none';
+  document.querySelectorAll('.info-btn.active').forEach(el=>el.classList.remove('active'));
+}
+function positionTip(e){
+  const t=document.getElementById('global-tooltip');
+  const margin=12;
+  let x=e.clientX+margin;
+  let y=e.clientY+margin;
+  // keep inside viewport
+  if(x+290>window.innerWidth) x=e.clientX-290-margin;
+  if(y+200>window.innerHeight) y=e.clientY-200-margin;
+  t.style.left=Math.max(8,x)+'px';
+  t.style.top=Math.max(8,y)+'px';
+}
+document.addEventListener('mousemove',e=>{
+  const t=document.getElementById('global-tooltip');
+  if(t.style.display==='block') positionTip(e);
+});
 
 /* INIT */
 initFilters();
