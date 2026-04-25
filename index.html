@@ -99,6 +99,53 @@ tr:hover td{background:var(--bg2)}
 .klub-nav-arrows button:hover{background:var(--bg3)}
 .klub-nav-arrows button:disabled{opacity:.3;cursor:default}
 .klub-counter{font-size:12px;color:var(--muted)}
+
+/* ====== KLUB HERO ====== */
+.k-hero{background:#111110;border-radius:var(--radius-lg);padding:2rem 2rem 1.75rem;margin-bottom:1.25rem;overflow:hidden;position:relative}
+.k-hero-accent{position:absolute;top:-60px;right:-60px;width:260px;height:260px;border-radius:50%;background:rgba(50,102,173,0.18);pointer-events:none}
+.k-hero-name{font-size:36px;font-weight:600;color:#f0ede8;letter-spacing:-0.02em;margin-bottom:1.25rem;line-height:1.1}
+.k-hero-pills{display:flex;gap:10px;flex-wrap:wrap}
+.k-pill{background:rgba(255,255,255,0.07);border:0.5px solid rgba(255,255,255,0.12);border-radius:var(--radius-lg);padding:14px 18px;min-width:130px;flex:1}
+.k-pill-label{font-size:10px;color:rgba(240,237,232,0.45);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px}
+.k-pill-value{font-size:22px;font-weight:500;color:#f0ede8;font-variant-numeric:tabular-nums}
+.k-pill-sub{font-size:11px;margin-top:3px}
+.k-pill-up{color:#6ecf8a}.k-pill-dn{color:#f08080}.k-pill-neu{color:rgba(240,237,232,0.45)}
+
+/* GAUGE — samozadostnost */
+.k-gauge-wrap{display:flex;gap:1.25rem;margin-bottom:1.25rem;flex-wrap:wrap}
+.k-gauge-card{background:var(--bg2);border-radius:var(--radius-lg);padding:1.25rem;flex:1;min-width:200px;display:flex;flex-direction:column;align-items:center;gap:.5rem}
+.k-gauge-title{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;text-align:center}
+.k-gauge-svg{width:140px;height:80px}
+.k-gauge-pct{font-size:26px;font-weight:500;color:var(--text);text-align:center}
+.k-gauge-sub{font-size:11px;color:var(--hint);text-align:center}
+
+/* REVENUE BARS */
+.k-bars{background:var(--bg2);border-radius:var(--radius-lg);padding:1.25rem;margin-bottom:1.25rem}
+.k-bars-title{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:1rem}
+.k-bar-row{margin-bottom:.85rem}
+.k-bar-row:last-child{margin-bottom:0}
+.k-bar-meta{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:5px;gap:.5rem}
+.k-bar-name{font-size:12px;color:var(--text);display:flex;align-items:center;gap:5px}
+.k-bar-vals{font-size:11px;color:var(--muted);white-space:nowrap}
+.k-bar-track{height:8px;background:var(--bg3);border-radius:4px;overflow:hidden;position:relative}
+.k-bar-fill{height:100%;border-radius:4px;width:0;transition:width .7s cubic-bezier(.4,0,.2,1)}
+.k-bar-fill-24{position:absolute;top:0;left:0;height:100%;border-radius:4px;opacity:.35;width:0;transition:width .7s cubic-bezier(.4,0,.2,1) .1s}
+
+/* DETAIL TABLE */
+.k-detail{background:var(--bg2);border-radius:var(--radius-lg);overflow:hidden;margin-bottom:1.25rem}
+.k-detail table{width:100%;border-collapse:collapse;font-size:13px}
+.k-detail th{padding:9px 14px;text-align:right;color:var(--muted);font-weight:500;font-size:11px;text-transform:uppercase;letter-spacing:.03em;border-bottom:0.5px solid var(--border2)}
+.k-detail th:first-child{text-align:left}
+.k-detail td{padding:10px 14px;text-align:right;border-bottom:0.5px solid var(--border);font-variant-numeric:tabular-nums}
+.k-detail td:first-child{text-align:left}
+.k-detail tr:last-child td{border-bottom:none}
+.k-detail tr:hover td{background:var(--bg3)}
+.k-detail .row-cat td{font-size:12px;color:var(--muted)}
+.k-detail .row-cat td:first-child{padding-left:26px}
+.k-detail .row-total td{font-weight:500;background:var(--bg)}
+
+@keyframes fadeSlideIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.k-animate{animation:fadeSlideIn .35s ease both}
 </style>
 </head>
 <body>
@@ -438,6 +485,29 @@ function renderPrimerjava(){
 function sortBy(col){ sortDir=sortCol===col?sortDir*-1:1; sortCol=col; renderPrimerjava(); }
 
 /* KLUB */
+function animateCount(el,target,prefix,suffix,duration){
+  duration=duration||700;
+  const start=performance.now();
+  const isFloat=target%1!==0;
+  function step(now){
+    const p=Math.min((now-start)/duration,1);
+    const ease=1-Math.pow(1-p,3);
+    const val=target*ease;
+    el.textContent=prefix+(isFloat?val.toLocaleString('sl-SI',{minimumFractionDigits:1,maximumFractionDigits:1}):Math.round(val).toLocaleString('sl-SI'))+suffix;
+    if(p<1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+
+function gaugeArc(pct){
+  const clamp=Math.min(100,Math.max(0,pct));
+  const angle=Math.PI*clamp/100;
+  const r=55,cx=70,cy=70;
+  const x=cx-r*Math.cos(angle),y=cy-r*Math.sin(angle);
+  const col=clamp>=60?'#6ecf8a':clamp>=35?'#f0c060':'#f08080';
+  return {path:`M ${cx-r} ${cy} A ${r} ${r} 0 0 1 ${x.toFixed(2)} ${y.toFixed(2)}`,col,clamp};
+}
+
 function renderKlub(){
   if(!klubi.length){
     document.getElementById('klub-content').innerHTML='<p style="color:var(--muted);padding:1rem 0">Ni izbranih klubov. Izberite vsaj en klub v filtru in kliknite Išči.</p>';
@@ -447,22 +517,57 @@ function renderKlub(){
   updateKlubNav();
   const k=klubi[currentKlubIdx];
   const d=k.skupaj25-k.skupaj24;
-  const badge=d>=0?`<span class="badge badge-up">+${fmtK(d)}</span>`:`<span class="badge badge-dn">${fmtK(d)}</span>`;
+  const dSign=d>=0?'+':'';
+  const dCol=d>=0?'k-pill-up':'k-pill-dn';
+  const dPct=k.skupaj24>0?((d/k.skupaj24)*100).toFixed(1):'—';
+  const pridPct25=k.skupaj25>0?(k.pridobitna25/k.skupaj25*100):0;
+  const pridPct24=k.skupaj24>0?(k.pridobitna24/k.skupaj24*100):0;
+  const g25=gaugeArc(pridPct25);
+  const g24=gaugeArc(pridPct24);
 
-  // table rows with tooltips
+  const CAT_BARS=[
+    {key:'dotProracun',label:'Dotacije proračun',  color:'#3266ad',tipKey:'b'},
+    {key:'dotFund',    label:'Dotacije fundacije', color:'#1d9e75',tipKey:'c'},
+    {key:'donacije',   label:'Donacije',            color:'#d85a30',tipKey:'c2'},
+    {key:'clanarine',  label:'Članarine',           color:'#ba7517',tipKey:'e'},
+    {key:'prodaja',    label:'Prodaja storitev',    color:'#533ab7',tipKey:'f'},
+    {key:'prodajaBlago',label:'Prodaja blaga',      color:'#e24b4a',tipKey:'g'},
+    {key:'ostali',     label:'Ostali prihodki',     color:'#888780',tipKey:'h'},
+  ].filter(c=>(k[c.key+'25']||0)+(k[c.key+'24']||0)>0);
+
+  const maxVal=Math.max(...CAT_BARS.map(c=>Math.max(k[c.key+'25']||0,k[c.key+'24']||0)),1);
+
+  const bars=CAT_BARS.map(c=>{
+    const v25=k[c.key+'25']||0,v24=k[c.key+'24']||0;
+    const p25=(v25/maxVal*100).toFixed(1),p24=(v24/maxVal*100).toFixed(1);
+    const dd=v25-v24;
+    const tip=tooltip(c.tipKey);
+    const ddStr=dd!==0?` <span class="${dd>=0?'pos':'neg'}" style="font-size:10px">${dd>=0?'+':''}${fmtK(dd)}</span>`:'';
+    return `<div class="k-bar-row">
+      <div class="k-bar-meta">
+        <span class="k-bar-name"><span style="width:9px;height:9px;border-radius:2px;background:${c.color};flex-shrink:0;display:inline-block"></span>${c.label}${tip}</span>
+        <span class="k-bar-vals">${fmtK(v25)}${ddStr}</span>
+      </div>
+      <div class="k-bar-track">
+        <div class="k-bar-fill-24" style="background:${c.color}" data-w="${p24}"></div>
+        <div class="k-bar-fill" style="background:${c.color}" data-w="${p25}"></div>
+      </div>
+    </div>`;
+  }).join('');
+
   const tableRows=[
-    {key:'skupaj', l:'1. Skupni prihodki od dejavnosti', v25:k.skupaj25, v24:k.skupaj24, b:true},
-    {key:'a',  l:'a) Dotacije iz Fundacije za invalide',   v25:0,              v24:0},
-    {key:'b',  l:'b) Dotacije iz proračunskih sredstev',   v25:k.dotProracun25,v24:k.dotProracun24},
-    {key:'c',  l:'c) Dotacije iz fundacij in ustanov',     v25:k.dotFund25,    v24:k.dotFund24},
-    {key:'c2', l:'č) Donacije pravnih in fizičnih oseb',   v25:k.donacije25,   v24:k.donacije24},
-    {key:'d',  l:'d) Prispevki posebnih socialnih prog.',  v25:0,              v24:0},
-    {key:'e',  l:'e) Članarine in prispevki članov',       v25:k.clanarine25,  v24:k.clanarine24},
-    {key:'f',  l:'f) Prihodki od prodaje storitev',        v25:k.prodaja25,    v24:k.prodaja24},
-    {key:'g',  l:'g) Prihodki od prodaje blaga',           v25:k.prodajaBlago25,v24:k.prodajaBlago24},
-    {key:'h',  l:'h) Ostali prihodki od dejavnosti',       v25:k.ostali25,     v24:k.ostali24},
-    {key:'pridobitna', l:'2. Prihodki od pridobitne dejavnosti', v25:k.pridobitna25, v24:k.pridobitna24, b:true},
-    {key:'dotDrustev', l:'3. Dotacije drugim društvom',    v25:k.dotDrustev25, v24:k.dotDrustev24, b:true},
+    {key:'skupaj',     l:'1. Skupni prihodki od dejavnosti',    v25:k.skupaj25,       v24:k.skupaj24,       b:true},
+    {key:'a',          l:'a) Dotacije iz Fundacije za invalide', v25:0,                v24:0},
+    {key:'b',          l:'b) Dotacije iz proračunskih sredstev', v25:k.dotProracun25,  v24:k.dotProracun24},
+    {key:'c',          l:'c) Dotacije iz fundacij in ustanov',   v25:k.dotFund25,      v24:k.dotFund24},
+    {key:'c2',         l:'č) Donacije pravnih in fizičnih oseb', v25:k.donacije25,     v24:k.donacije24},
+    {key:'d',          l:'d) Prispevki posebnih soc. programov', v25:0,               v24:0},
+    {key:'e',          l:'e) Članarine in prispevki članov',     v25:k.clanarine25,   v24:k.clanarine24},
+    {key:'f',          l:'f) Prihodki od prodaje storitev',      v25:k.prodaja25,      v24:k.prodaja24},
+    {key:'g',          l:'g) Prihodki od prodaje blaga',         v25:k.prodajaBlago25, v24:k.prodajaBlago24},
+    {key:'h',          l:'h) Ostali prihodki od dejavnosti',     v25:k.ostali25,       v24:k.ostali24},
+    {key:'pridobitna', l:'2. Prihodki od pridobitne dejavnosti', v25:k.pridobitna25,   v24:k.pridobitna24,   b:true},
+    {key:'dotDrustev', l:'3. Dotacije drugim društvom',          v25:k.dotDrustev25,   v24:k.dotDrustev24,   b:true},
   ].map(r=>{
     const rd=r.v25-r.v24; const rp=pct(r.v25,r.v24);
     const tip=tooltip(r.key);
@@ -473,30 +578,112 @@ function renderKlub(){
       <td class="${cls(rd)}">${rd!==0&&rp!=='—'?sign(rd)+rp+'%':'—'}</td></tr>`;
   }).join('');
 
-  const pieV=CAT_DEFS.map(c=>k[c.key+'25']||0);
-  document.getElementById('klub-content').innerHTML=`
-    <div class="club-header">${k.ime} ${badge}</div>
-    <div class="metric-grid">
-      <div class="metric"><div class="metric-label">Prihodki 2025</div><div class="metric-value">${fmtK(k.skupaj25)}</div></div>
-      <div class="metric"><div class="metric-label">Prihodki 2024</div><div class="metric-value">${fmtK(k.skupaj24)}</div></div>
-      <div class="metric"><div class="metric-label">Sprememba</div><div class="metric-value ${cls(d)}">${sign(d)}${fmtK(d)}</div><div class="metric-sub">${sign(d)}${pct(k.skupaj25,k.skupaj24)}%</div></div>
-      <div class="metric"><div class="metric-label">% pridobitne 2025</div><div class="metric-value">${pctOf(k.pridobitna25,k.skupaj25)}</div><div class="metric-sub">2024: ${pctOf(k.pridobitna24,k.skupaj24)}</div></div>
-    </div>
-    <div class="section-title">Struktura prihodkov 2025</div>
-    <div style="position:relative;width:100%;height:240px;margin-bottom:1.5rem"><canvas id="chart-klub" role="img" aria-label="Struktura prihodkov za ${k.ime}">Tortni diagram prihodkov za ${k.ime}.</canvas></div>
-    <div class="table-wrap"><table>
-      <thead><tr>
-        <th style="text-align:left">Postavka</th>
-        <th>2025</th><th>2024</th><th>Razlika €</th><th>%</th>
-      </tr></thead>
-      <tbody>${tableRows}</tbody>
-    </table></div>
-    <p style="font-size:11px;color:var(--hint);margin-top:.75rem">Kliknite <i style="font-style:normal;font-weight:500">i</i> pri posamezni postavki za opis.</p>`;
+  const samLabel=p=>p>=60?'Visoka samostojnost':p>=35?'Zmerna samostojnost':'Visoka odvisnost';
 
-  dc('chart-klub');
-  charts['chart-klub']=new Chart(document.getElementById('chart-klub'),{type:'doughnut',
-    data:{labels:CAT_DEFS.map(c=>c.label),datasets:[{data:pieV,backgroundColor:CAT_DEFS.map(c=>c.color),borderWidth:1}]},
-    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{font:{size:12},boxWidth:12}}}}});
+  document.getElementById('klub-content').innerHTML=`
+  <div class="k-hero k-animate">
+    <div class="k-hero-accent"></div>
+    <div class="k-hero-name">${k.ime}</div>
+    <div class="k-hero-pills">
+      <div class="k-pill">
+        <div class="k-pill-label">Prihodki 2025</div>
+        <div class="k-pill-value" id="anim-skupaj">—</div>
+        <div class="k-pill-sub k-pill-neu">skupaj</div>
+      </div>
+      <div class="k-pill">
+        <div class="k-pill-label">Sprememba vs 2024</div>
+        <div class="k-pill-value ${dCol}" id="anim-delta">—</div>
+        <div class="k-pill-sub ${dCol}">${dSign}${dPct}%</div>
+      </div>
+      <div class="k-pill">
+        <div class="k-pill-label">Pridobitna dejavnost</div>
+        <div class="k-pill-value" id="anim-prid">—</div>
+        <div class="k-pill-sub k-pill-neu">${pridPct25.toFixed(1)}% od skupaj</div>
+      </div>
+      <div class="k-pill">
+        <div class="k-pill-label">Donacije + sponzorji</div>
+        <div class="k-pill-value" id="anim-don">—</div>
+        <div class="k-pill-sub k-pill-neu">${((k.donacije25/k.skupaj25||0)*100).toFixed(1)}% od skupaj</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="k-gauge-wrap k-animate" style="animation-delay:.08s">
+    <div class="k-gauge-card">
+      <div class="k-gauge-title">Samozadostnost 2025</div>
+      <svg class="k-gauge-svg" viewBox="0 0 140 80" role="img" aria-label="Samozadostnost ${pridPct25.toFixed(1)}%">
+        <path d="M 15 70 A 55 55 0 0 1 125 70" fill="none" stroke="rgba(128,128,128,0.15)" stroke-width="10" stroke-linecap="round"/>
+        <path id="gauge-arc-25" d="M 15 70 A 55 55 0 0 1 15 70" fill="none" stroke="${g25.col}" stroke-width="10" stroke-linecap="round"/>
+      </svg>
+      <div class="k-gauge-pct" id="gauge-pct-25">0%</div>
+      <div class="k-gauge-sub">${samLabel(pridPct25)}</div>
+    </div>
+    <div class="k-gauge-card">
+      <div class="k-gauge-title">Samozadostnost 2024</div>
+      <svg class="k-gauge-svg" viewBox="0 0 140 80" role="img" aria-label="Samozadostnost 2024 ${pridPct24.toFixed(1)}%">
+        <path d="M 15 70 A 55 55 0 0 1 125 70" fill="none" stroke="rgba(128,128,128,0.15)" stroke-width="10" stroke-linecap="round"/>
+        <path id="gauge-arc-24" d="M 15 70 A 55 55 0 0 1 15 70" fill="none" stroke="${g24.col}" stroke-width="10" stroke-linecap="round"/>
+      </svg>
+      <div class="k-gauge-pct" id="gauge-pct-24">0%</div>
+      <div class="k-gauge-sub">${samLabel(pridPct24)}</div>
+    </div>
+    <div class="k-gauge-card" style="justify-content:center">
+      <div class="k-gauge-title" style="margin-bottom:.75rem">Razlaga ocene</div>
+      <div style="font-size:12px;color:var(--text);line-height:1.7">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px"><span style="width:10px;height:10px;border-radius:50%;background:#6ecf8a;flex-shrink:0"></span>≥ 60 % — klub pretežno financira sam sebe</div>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px"><span style="width:10px;height:10px;border-radius:50%;background:#f0c060;flex-shrink:0"></span>35–60 % — mešano, zmerna odvisnost</div>
+        <div style="display:flex;align-items:center;gap:8px"><span style="width:10px;height:10px;border-radius:50%;background:#f08080;flex-shrink:0"></span>&lt; 35 % — visoka odvisnost od zunanjih virov</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="k-bars k-animate" style="animation-delay:.16s">
+    <div class="k-bars-title">Struktura prihodkov — 2025 vs 2024</div>
+    ${bars}
+    <p style="font-size:10px;color:var(--hint);margin-top:.85rem">Polna barva = 2025 · Prosojno = 2024 · Razvrstitev po vrednosti 2025</p>
+  </div>
+
+  <details class="k-animate" style="animation-delay:.22s">
+    <summary style="font-size:11px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;cursor:pointer;padding:.5rem 0;user-select:none;list-style:none">Podrobna tabela ▸</summary>
+    <div class="k-detail" style="margin-top:.75rem">
+      <table>
+        <thead><tr>
+          <th style="text-align:left">Postavka</th>
+          <th>2025</th><th>2024</th><th>Razlika €</th><th>%</th>
+        </tr></thead>
+        <tbody>${tableRows}</tbody>
+      </table>
+    </div>
+    <p style="font-size:11px;color:var(--hint);margin-top:.5rem">Kliknite <i style="font-style:normal;font-weight:500">i</i> za opis postavke.</p>
+  </details>`;
+
+  // run animations after DOM paint
+  setTimeout(()=>{
+    animateCount(document.getElementById('anim-skupaj'),k.skupaj25/1000,'','k€');
+    animateCount(document.getElementById('anim-delta'),Math.abs(d)/1000,d>=0?'+':'-','k€');
+    animateCount(document.getElementById('anim-prid'),k.pridobitna25/1000,'','k€');
+    animateCount(document.getElementById('anim-don'),k.donacije25/1000,'','k€');
+    // animate gauge arcs via JS (SVG path animation)
+    const setGauge=(arcId,pctId,g)=>{
+      const arc=document.getElementById(arcId);
+      if(arc){
+        arc.style.transition='none';
+        arc.setAttribute('d',`M 15 70 A 55 55 0 0 1 15 70`);
+        requestAnimationFrame(()=>{
+          requestAnimationFrame(()=>{
+            arc.style.transition='d .9s cubic-bezier(.4,0,.2,1)';
+            arc.setAttribute('d',g.path);
+          });
+        });
+      }
+      const pctEl=document.getElementById(pctId);
+      if(pctEl) animateCount(pctEl,g.clamp,'','%',900);
+    };
+    setGauge('gauge-arc-25','gauge-pct-25',g25);
+    setGauge('gauge-arc-24','gauge-pct-24',g24);
+    // animate bars
+    document.querySelectorAll('.k-bar-fill,.k-bar-fill-24').forEach(b=>{b.style.width=b.dataset.w+'%';});
+  },50);
 }
 
 /* TOOLTIP JS */
