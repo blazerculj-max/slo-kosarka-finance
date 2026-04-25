@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="sl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Finančni pregled košarkarskih klubov 2025</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #ffffff;
+    --bg-secondary: #f5f5f3;
+    --text: #1a1a1a;
+    --text-muted: #666660;
+    --text-hint: #999994;
+    --border: rgba(0,0,0,0.12);
+    --border-med: rgba(0,0,0,0.22);
+    --radius: 8px;
+    --radius-lg: 12px;
+    --blue: #3266ad;
+    --blue-light: #e6f1fb;
+    --gray: #b4b2a9;
+    --green: #2d7a44;
+    --red: #a32d2d;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1e1e1c;
+      --bg-secondary: #2a2a28;
+      --text: #f0ede8;
+      --text-muted: #a0a09a;
+      --text-hint: #666660;
+      --border: rgba(255,255,255,0.10);
+      --border-med: rgba(255,255,255,0.20);
+      --blue: #5b8de0;
+      --blue-light: #1a2d4a;
+      --gray: #888780;
+      --green: #5aad72;
+      --red: #e06060;
+    }
+  }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.5; }
+  .container { max-width: 1100px; margin: 0 auto; padding: 0 1.5rem 3rem; }
+  header { padding: 2rem 0 1.5rem; border-bottom: 0.5px solid var(--border); margin-bottom: 1.5rem; }
+  header h1 { font-size: 22px; font-weight: 500; margin-bottom: 4px; }
+  header p { font-size: 13px; color: var(--text-muted); }
+  .tabs { display: flex; gap: 4px; margin-bottom: 1.5rem; flex-wrap: wrap; border-bottom: 0.5px solid var(--border); padding-bottom: 0; }
+  .tab { padding: 8px 16px; font-size: 13px; font-weight: 500; border: none; border-bottom: 2px solid transparent; background: none; color: var(--text-muted); cursor: pointer; transition: all 0.15s; margin-bottom: -0.5px; }
+  .tab.active { color: var(--text); border-bottom-color: var(--text); }
+  .tab:hover:not(.active) { color: var(--text); }
+  .section { display: none; }
+  .section.active { display: block; }
+  .metric-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 1.5rem; }
+  .metric { background: var(--bg-secondary); border-radius: var(--radius); padding: 14px 16px; }
+  .metric-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 6px; }
+  .metric-value { font-size: 22px; font-weight: 500; color: var(--text); }
+  .metric-sub { font-size: 11px; color: var(--text-hint); margin-top: 3px; }
+  .chart-wrap { position: relative; width: 100%; height: 300px; margin-bottom: 1.5rem; }
+  .chart-wrap-tall { height: 420px; }
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { padding: 8px 12px; text-align: right; color: var(--text-muted); font-weight: 500; font-size: 11px; text-transform: uppercase; letter-spacing: 0.03em; border-bottom: 0.5px solid var(--border-med); white-space: nowrap; }
+  th:first-child { text-align: left; }
+  th.sort-btn { cursor: pointer; user-select: none; }
+  th.sort-btn:hover { color: var(--text); }
+  td { padding: 9px 12px; text-align: right; color: var(--text); border-bottom: 0.5px solid var(--border); white-space: nowrap; font-variant-numeric: tabular-nums; }
+  td:first-child { text-align: left; font-weight: 500; }
+  tr:hover td { background: var(--bg-secondary); }
+  .row-cat td { font-weight: 400; }
+  .row-cat td:first-child { padding-left: 24px; color: var(--text-muted); font-size: 12px; }
+  .row-total td { font-weight: 500; background: var(--bg-secondary); }
+  .pos { color: var(--green); }
+  .neg { color: var(--red); }
+  .legend { display: flex; gap: 20px; flex-wrap: wrap; font-size: 12px; color: var(--text-muted); margin-bottom: 10px; }
+  .legend span { display: flex; align-items: center; gap: 6px; }
+  .leg-box { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+  select { font-size: 13px; padding: 7px 12px; border: 0.5px solid var(--border-med); border-radius: var(--radius); background: var(--bg); color: var(--text); margin-bottom: 1.25rem; cursor: pointer; }
+  .club-header { font-size: 20px; font-weight: 500; color: var(--text); margin-bottom: 1rem; }
+  .section-title { font-size: 13px; font-weight: 500; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.75rem; margin-top: 1.5rem; }
+  .badge-rast { display: inline-block; background: #eaf3de; color: #3b6d11; font-size: 11px; font-weight: 500; padding: 2px 8px; border-radius: 4px; }
+  .badge-upad { display: inline-block; background: #fcebeb; color: #a32d2d; font-size: 11px; font-weight: 500; padding: 2px 8px; border-radius: 4px; }
+  @media (prefers-color-scheme: dark) {
+    .badge-rast { background: #173404; color: #97c459; }
+    .badge-upad { background: #501313; color: #f09595; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>Finančni pregled košarkarskih klubov</h1>
+    <p>Izkaz poslovnega izida · 1. 1. – 31. 12. 2025 · Podatki v EUR s centi</p>
+  </header>
+
+  <div class="tabs">
+    <button class="tab active" onclick="showTab('pregled', this)">Pregled</button>
+    <button class="tab" onclick="showTab('primerjava', this)">Primerjava</button>
+    <button class="tab" onclick="showTab('klub', this)">Posamezni klub</button>
+    <button class="tab" onclick="showTab('kategorije', this)">Po kategorijah</button>
+  </div>
+
+  <!-- TAB: PREGLED -->
+  <div id="pregled" class="section active">
+    <div class="metric-grid" id="top-metrics"></div>
+    <div class="section-title">Skupni prihodki po klubih</div>
+    <div class="legend">
+      <span><span class="leg-box" style="background:#3266ad"></span>2025</span>
+      <span><span class="leg-box" style="background:#b4b2a9"></span>2024</span>
+    </div>
+    <div class="chart-wrap"><canvas id="chart-pregled" role="img" aria-label="Skupni prihodki vseh klubov 2025 in 2024">Primerjava skupnih prihodkov 14 košarkarskih klubov za leti 2025 in 2024.</canvas></div>
+    <div class="table-wrap"><table id="table-pregled"></table></div>
+  </div>
+
+  <!-- TAB: PRIMERJAVA -->
+  <div id="primerjava" class="section">
+    <div class="section-title">Prihodki od pridobitne dejavnosti</div>
+    <div class="legend">
+      <span><span class="leg-box" style="background:#3266ad"></span>2025</span>
+      <span><span class="leg-box" style="background:#b4b2a9"></span>2024</span>
+    </div>
+    <div class="chart-wrap chart-wrap-tall"><canvas id="chart-primerjava" role="img" aria-label="Prihodki od pridobitne dejavnosti po klubih">Prihodki od pridobitne dejavnosti za vseh 14 klubov.</canvas></div>
+    <p style="font-size:12px;color:var(--text-muted);margin-bottom:0.75rem">Kliknite na naslov stolpca za razvrščanje ↕</p>
+    <div class="table-wrap"><table id="table-primerjava"></table></div>
+  </div>
+
+  <!-- TAB: KLUB -->
+  <div id="klub" class="section">
+    <select id="klub-select" onchange="renderKlub()"></select>
+    <div id="klub-content"></div>
+  </div>
+
+  <!-- TAB: KATEGORIJE -->
+  <div id="kategorije" class="section">
+    <select id="kat-select" onchange="renderKat()">
+      <option value="skupaj">Skupni prihodki od dejavnosti</option>
+      <option value="dotacije_proracun">Dotacije iz proračunskih sredstev</option>
+      <option value="donacije">Donacije fizičnih in pravnih oseb</option>
+      <option value="clanarine">Članarine in prispevki članov</option>
+      <option value="prodaja">Prihodki od prodaje storitev</option>
+      <option value="pridobitna">Prihodki od pridobitne dejavnosti</option>
+    </select>
+    <div class="legend">
+      <span><span class="leg-box" style="background:#3266ad"></span>2025</span>
+      <span><span class="leg-box" style="background:#b4b2a9"></span>2024</span>
+    </div>
+    <div class="chart-wrap chart-wrap-tall"><canvas id="chart-kat" role="img" aria-label="Primerjava izbrane kategorije prihodkov med klubi">Primerjava kategorije prihodkov med vsemi klubi.</canvas></div>
+  </div>
+</div>
+
+<script>
+const klubi = [
+  { ime: 'Triglav',     skupaj25: 500647.45, skupaj24: 463974.38, dotProracun25: 59551.85, dotProracun24: 52207.42, dotFund25: 0, dotFund24: 0, donacije25: 97464, donacije24: 53590, clanarine25: 7920, clanarine24: 5850, prodaja25: 335711.60, prodaja24: 351078.96, prodajaBlago25: 0, prodajaBlago24: 0, ostali25: 0, ostali24: 0, pridobitna25: 335711.60, pridobitna24: 351078.96, dotacijeDrustev25: 1250, dotacijeDrustev24: 400 },
+  { ime: 'Helios',      skupaj25: 786330.02, skupaj24: 903059.39, dotProracun25: 55387.53, dotProracun24: 59981.70, dotFund25: 0, dotFund24: 0, donacije25: 41799.77, donacije24: 38386.23, clanarine25: 2800, clanarine24: 2840, prodaja25: 676416.46, prodaja24: 769733.99, prodajaBlago25: 3658.73, prodajaBlago24: 14044.94, ostali25: 6267.53, ostali24: 18072.53, pridobitna25: 10576.33, pridobitna24: 18857.81, dotacijeDrustev25: 0, dotacijeDrustev24: 0 },
+  { ime: 'Pod Četrtek', skupaj25: 250043.42, skupaj24: 227840.01, dotProracun25: 22600, dotProracun24: 22300.01, dotFund25: 0, dotFund24: 0, donacije25: 118350, donacije24: 99100, clanarine25: 0, clanarine24: 0, prodaja25: 109093.42, prodaja24: 106440, prodajaBlago25: 0, prodajaBlago24: 0, ostali25: 0, ostali24: 0, pridobitna25: 109093.42, pridobitna24: 106400.01, dotacijeDrustev25: 0, dotacijeDrustev24: 0 },
+  { ime: 'Ilirija',     skupaj25: 945976.26, skupaj24: 651564.37, dotProracun25: 25221.84, dotProracun24: 14585, dotFund25: 0, dotFund24: 0, donacije25: 399519.77, donacije24: 398480, clanarine25: 4025, clanarine24: 4410, prodaja25: 517209.65, prodaja24: 226618.03, prodajaBlago25: 0, prodajaBlago24: 0, ostali25: 0, ostali24: 7471.34, pridobitna25: 517209.65, pridobitna24: 234089.37, dotacijeDrustev25: 0, dotacijeDrustev24: 0 },
+  { ime: 'Senčur',      skupaj25: 443839.82, skupaj24: 536469.51, dotProracun25: 66328.66, dotProracun24: 67956.91, dotFund25: 0, dotFund24: 0, donacije25: 11000, donacije24: 0, clanarine25: 1875, clanarine24: 1245, prodaja25: 364453.05, prodaja24: 467267.60, prodajaBlago25: 0, prodajaBlago24: 0, ostali25: 183.11, ostali24: 0, pridobitna25: 364636.16, pridobitna24: 467267.60, dotacijeDrustev25: 0, dotacijeDrustev24: 0 },
+  { ime: 'Šentjur',     skupaj25: 508858.67, skupaj24: 478360.35, dotProracun25: 107984.75, dotProracun24: 101680.67, dotFund25: 0, dotFund24: 0, donacije25: 500, donacije24: 100, clanarine25: 0, clanarine24: 0, prodaja25: 400373.92, prodaja24: 376579.68, prodajaBlago25: 0, prodajaBlago24: 0, ostali25: 0, ostali24: 0, pridobitna25: 400373.92, pridobitna24: 376579.68, dotacijeDrustev25: 0, dotacijeDrustev24: 0 },
+  { ime: 'Rogaška',     skupaj25: 372372.57, skupaj24: 329770.90, dotProracun25: 68021.17, dotProracun24: 55061.63, dotFund25: 0, dotFund24: 0, donacije25: 10360, donacije24: 3900, clanarine25: 0, clanarine24: 0, prodaja25: 290389.21, prodaja24: 269958.57, prodajaBlago25: 0, prodajaBlago24: 0, ostali25: 3602.19, ostali24: 850.70, pridobitna25: 293991.40, pridobitna24: 270809.27, dotacijeDrustev25: 0, dotacijeDrustev24: 0 },
+  { ime: 'Laško',       skupaj25: 400505.94, skupaj24: 268207.49, dotProracun25: 66282.47, dotProracun24: 35323.44, dotFund25: 0, dotFund24: 0, donacije25: 78745, donacije24: 19286.17, clanarine25: 3035, clanarine24: 15448.97, prodaja25: 252442.43, prodaja24: 198115.20, prodajaBlago25: 0, prodajaBlago24: 16.39, ostali25: 1.04, ostali24: 17.32, pridobitna25: 247942.43, pridobitna24: 187534.27, dotacijeDrustev25: 0, dotacijeDrustev24: 0 },
+  { ime: 'Hopsi',       skupaj25: 379435.71, skupaj24: 293535.31, dotProracun25: 136787.30, dotProracun24: 120000, dotFund25: 0, dotFund24: 0, donacije25: 45970, donacije24: 16420.51, clanarine25: 220, clanarine24: 120, prodaja25: 0, prodaja24: 0, prodajaBlago25: 0, prodajaBlago24: 0, ostali25: 196458.41, ostali24: 156994.80, pridobitna25: 176947.57, pridobitna24: 156994.80, dotacijeDrustev25: 0, dotacijeDrustev24: 0 },
+  { ime: 'Celje',       skupaj25: 158764.15, skupaj24: 153416.89, dotProracun25: 22641.14, dotProracun24: 29911.46, dotFund25: 0, dotFund24: 0, donacije25: 3050, donacije24: 6778.77, clanarine25: 46401.97, clanarine24: 51640, prodaja25: 86534.70, prodaja24: 65086.66, prodajaBlago25: 0, prodajaBlago24: 0, ostali25: 136.34, ostali24: 0, pridobitna25: 86534.70, pridobitna24: 65086.66, dotacijeDrustev25: 0, dotacijeDrustev24: 0 },
+  { ime: 'Ajdovščina',  skupaj25: 379177.28, skupaj24: 313217.53, dotProracun25: 72693.14, dotProracun24: 76912.13, dotFund25: 0, dotFund24: 0, donacije25: 29600, donacije24: 24800, clanarine25: 78094.18, clanarine24: 84977.77, prodaja25: 198789.96, prodaja24: 126527.63, prodajaBlago25: 0, prodajaBlago24: 0, ostali25: 0, ostali24: 0, pridobitna25: 198789.96, pridobitna24: 126527.63, dotacijeDrustev25: 0, dotacijeDrustev24: 0 },
+  { ime: 'Loka',        skupaj25: 484130.06, skupaj24: 408952.46, dotProracun25: 87053.78, dotProracun24: 68123.25, dotFund25: 0, dotFund24: 0, donacije25: 38394.61, donacije24: 16248, clanarine25: 5045, clanarine24: 3330, prodaja25: 353636.67, prodaja24: 321251.21, prodajaBlago25: 0, prodajaBlago24: 0, ostali25: 0, ostali24: 0, pridobitna25: 353636.67, pridobitna24: 321251.21, dotacijeDrustev25: 0, dotacijeDrustev24: 0 },
+  { ime: 'Gorica',      skupaj25: 260901.64, skupaj24: 288597.72, dotProracun25: 42854.25, dotProracun24: 58865.18, dotFund25: 42330.92, dotFund24: 26648.12, donacije25: 25427.98, donacije24: 29498.73, clanarine25: 6800, clanarine24: 14441.66, prodaja25: 143375.52, prodaja24: 159144.03, prodajaBlago25: 112.97, prodajaBlago24: 0, ostali25: 0, ostali24: 0, pridobitna25: 143488.49, pridobitna24: 159143.54, dotacijeDrustev25: 0, dotacijeDrustev24: 0 },
+  { ime: 'Plama',       skupaj25: 153468.77, skupaj24: 148329.18, dotProracun25: 46527, dotProracun24: 46026, dotFund25: 0, dotFund24: 0, donacije25: 2600, donacije24: 13300, clanarine25: 49933.61, clanarine24: 45785.70, prodaja25: 54408.16, prodaja24: 43217.48, prodajaBlago25: 0, prodajaBlago24: 0, ostali25: 0, ostali24: 0, pridobitna25: 54408.16, pridobitna24: 43217.48, dotacijeDrustev25: 0, dotacijeDrustev24: 0 },
+];
+
+const fmt = v => v === 0 ? '—' : v.toLocaleString('sl-SI', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+const fmtK = v => (v/1000).toFixed(1) + ' k€';
+const sign = d => d >= 0 ? '+' : '';
+const clsName = d => d >= 0 ? 'pos' : 'neg';
+const pct = (a,b) => b > 0 ? ((a-b)/b*100).toFixed(1) : '—';
+
+let sortCol = 'skupaj25', sortDir = 1;
+const charts = {};
+
+function destroyChart(id) { if (charts[id]) { charts[id].destroy(); delete charts[id]; } }
+
+function showTab(name, btn) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById(name).classList.add('active');
+  if (name === 'pregled') renderPregled();
+  if (name === 'primerjava') renderPrimerjava();
+  if (name === 'klub') renderKlub();
+  if (name === 'kategorije') renderKat();
+}
+
+function renderPregled() {
+  const t25 = klubi.reduce((s,k) => s+k.skupaj25, 0);
+  const t24 = klubi.reduce((s,k) => s+k.skupaj24, 0);
+  const pr25 = klubi.reduce((s,k) => s+k.pridobitna25, 0);
+  const biggest = [...klubi].sort((a,b) => b.skupaj25-a.skupaj25)[0];
+  const mostGrowth = [...klubi].sort((a,b) => (b.skupaj25-b.skupaj24)-(a.skupaj25-a.skupaj24))[0];
+  const d = t25 - t24;
+
+  document.getElementById('top-metrics').innerHTML = `
+    <div class="metric"><div class="metric-label">Skupaj 2025</div><div class="metric-value">${fmtK(t25)}</div><div class="metric-sub">${sign(d)}${fmtK(d)} vs 2024</div></div>
+    <div class="metric"><div class="metric-label">Skupaj 2024</div><div class="metric-value">${fmtK(t24)}</div><div class="metric-sub">vseh 14 klubov</div></div>
+    <div class="metric"><div class="metric-label">Pridobitna 2025</div><div class="metric-value">${fmtK(pr25)}</div><div class="metric-sub">iz pridobitne dejavnosti</div></div>
+    <div class="metric"><div class="metric-label">Največji klub</div><div class="metric-value">${biggest.ime}</div><div class="metric-sub">${fmtK(biggest.skupaj25)}</div></div>
+    <div class="metric"><div class="metric-label">Največja rast</div><div class="metric-value">${mostGrowth.ime}</div><div class="metric-sub">+${fmtK(mostGrowth.skupaj25-mostGrowth.skupaj24)}</div></div>
+  `;
+
+  const sorted = [...klubi].sort((a,b) => b.skupaj25-a.skupaj25);
+  destroyChart('chart-pregled');
+  charts['chart-pregled'] = new Chart(document.getElementById('chart-pregled'), {
+    type: 'bar',
+    data: { labels: sorted.map(k=>k.ime), datasets: [
+      { label: '2025', data: sorted.map(k=>k.skupaj25), backgroundColor: '#3266ad', borderRadius: 3 },
+      { label: '2024', data: sorted.map(k=>k.skupaj24), backgroundColor: '#b4b2a9', borderRadius: 3 },
+    ]},
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } },
+      scales: { x: { ticks: { font: { size: 11 }, autoSkip: false, maxRotation: 45 } }, y: { ticks: { callback: v => fmtK(v), font: { size: 11 } } } } }
+  });
+
+  const rows = sorted.map(k => {
+    const d = k.skupaj25 - k.skupaj24; const p = pct(k.skupaj25, k.skupaj24);
+    return `<tr><td>${k.ime}</td><td>${fmt(k.skupaj25)}</td><td>${fmt(k.skupaj24)}</td>
+      <td class="${clsName(d)}">${sign(d)}${fmt(d)}</td>
+      <td class="${clsName(d)}">${sign(d)}${p}%</td>
+      <td>${fmt(k.pridobitna25)}</td><td>${fmt(k.pridobitna24)}</td></tr>`;
+  }).join('');
+  document.getElementById('table-pregled').innerHTML = `
+    <thead><tr><th>Klub</th><th>Skupaj 2025</th><th>Skupaj 2024</th><th>Razlika €</th><th>%</th><th>Pridobitna 25</th><th>Pridobitna 24</th></tr></thead>
+    <tbody>${rows}</tbody>`;
+}
+
+function renderPrimerjava() {
+  const sorted = [...klubi].sort((a,b) => b[sortCol]*sortDir - a[sortCol]*sortDir);
+  destroyChart('chart-primerjava');
+  charts['chart-primerjava'] = new Chart(document.getElementById('chart-primerjava'), {
+    type: 'bar',
+    data: { labels: sorted.map(k=>k.ime), datasets: [
+      { label: '2025', data: sorted.map(k=>k.pridobitna25), backgroundColor: '#3266ad', borderRadius: 3 },
+      { label: '2024', data: sorted.map(k=>k.pridobitna24), backgroundColor: '#b4b2a9', borderRadius: 3 },
+    ]},
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } },
+      scales: { x: { ticks: { font: { size: 11 }, autoSkip: false, maxRotation: 45 } }, y: { ticks: { callback: v => fmtK(v), font: { size: 11 } } } } }
+  });
+
+  const cols = [
+    { key: 'ime', label: 'Klub' }, { key: 'skupaj25', label: 'Skupaj 25' }, { key: 'skupaj24', label: 'Skupaj 24' },
+    { key: 'dotProracun25', label: 'Dotacije 25' }, { key: 'donacije25', label: 'Donacije 25' },
+    { key: 'clanarine25', label: 'Članarine 25' }, { key: 'prodaja25', label: 'Prodaja 25' },
+    { key: 'pridobitna25', label: 'Pridobitna 25' },
+  ];
+  const ths = cols.map(c => `<th class="sort-btn" onclick="sortBy('${c.key}')" style="${c.key==='ime'?'text-align:left':''}">${c.label} ${sortCol===c.key?(sortDir>0?'▼':'▲'):'↕'}</th>`).join('');
+  const rows = sorted.map(k => `<tr>${cols.map((c,i) => `<td style="${c.key==='ime'?'text-align:left':''}">${i===0?k[c.key]:fmt(k[c.key])}</td>`).join('')}</tr>`).join('');
+  document.getElementById('table-primerjava').innerHTML = `<thead><tr>${ths}</tr></thead><tbody>${rows}</tbody>`;
+}
+
+function sortBy(col) {
+  sortDir = sortCol === col ? sortDir * -1 : 1;
+  sortCol = col;
+  renderPrimerjava();
+}
+
+function renderKlub() {
+  const sel = document.getElementById('klub-select');
+  const k = klubi[parseInt(sel.value) || 0];
+  const d = k.skupaj25 - k.skupaj24;
+  const rows = [
+    { label: '1. Skupni prihodki od dejavnosti', v25: k.skupaj25, v24: k.skupaj24, bold: true },
+    { label: 'a) Dotacije iz Fundacije za invalide', v25: 0, v24: 0 },
+    { label: 'b) Dotacije iz proračunskih sredstev', v25: k.dotProracun25, v24: k.dotProracun24 },
+    { label: 'c) Dotacije iz fundacij in ustanov', v25: k.dotFund25, v24: k.dotFund24 },
+    { label: 'č) Donacije fizičnih in pravnih oseb', v25: k.donacije25, v24: k.donacije24 },
+    { label: 'd) Prispevki posebnih socialnih programov', v25: 0, v24: 0 },
+    { label: 'e) Članarine in prispevki članov', v25: k.clanarine25, v24: k.clanarine24 },
+    { label: 'f) Prihodki od prodaje storitev', v25: k.prodaja25, v24: k.prodaja24 },
+    { label: 'g) Prihodki od prodaje blaga in materiala', v25: k.prodajaBlago25, v24: k.prodajaBlago24 },
+    { label: 'h) Ostali prihodki od dejavnosti', v25: k.ostali25, v24: k.ostali24 },
+    { label: '2. Prihodki od pridobitne dejavnosti', v25: k.pridobitna25, v24: k.pridobitna24, bold: true },
+    { label: '3. Dotacije drugim društvom', v25: k.dotacijeDrustev25, v24: k.dotacijeDrustev24, bold: true },
+  ].map(r => {
+    const rd = r.v25 - r.v24; const rp = pct(r.v25, r.v24);
+    return `<tr class="${r.bold ? 'row-total' : 'row-cat'}">
+      <td>${r.label}</td><td>${fmt(r.v25)}</td><td>${fmt(r.v24)}</td>
+      <td class="${clsName(rd)}">${rd !== 0 ? sign(rd)+fmt(rd) : '—'}</td>
+      <td class="${clsName(rd)}">${rd !== 0 && rp !== '—' ? sign(rd)+rp+'%' : '—'}</td></tr>`;
+  }).join('');
+
+  const badge = d >= 0 ? `<span class="badge-rast">+${fmtK(d)}</span>` : `<span class="badge-upad">${fmtK(d)}</span>`;
+  const pieVals = [k.dotProracun25+k.dotFund25, k.donacije25, k.clanarine25, k.prodaja25+k.prodajaBlago25, k.ostali25].filter(v=>v>0);
+  const pieLabels = ['Dotacije','Donacije','Članarine','Prodaja','Ostali'].filter((_,i)=>[k.dotProracun25+k.dotFund25,k.donacije25,k.clanarine25,k.prodaja25+k.prodajaBlago25,k.ostali25][i]>0);
+
+  document.getElementById('klub-content').innerHTML = `
+    <div class="club-header">${k.ime} &nbsp; ${badge}</div>
+    <div class="metric-grid">
+      <div class="metric"><div class="metric-label">Prihodki 2025</div><div class="metric-value">${fmtK(k.skupaj25)}</div></div>
+      <div class="metric"><div class="metric-label">Prihodki 2024</div><div class="metric-value">${fmtK(k.skupaj24)}</div></div>
+      <div class="metric"><div class="metric-label">Sprememba</div><div class="metric-value ${clsName(d)}">${sign(d)}${fmtK(d)}</div><div class="metric-sub">${sign(d)}${pct(k.skupaj25,k.skupaj24)}%</div></div>
+      <div class="metric"><div class="metric-label">Pridobitna 2025</div><div class="metric-value">${fmtK(k.pridobitna25)}</div></div>
+    </div>
+    <div class="section-title">Struktura prihodkov 2025</div>
+    <div style="position:relative;width:100%;height:240px;margin-bottom:1.5rem"><canvas id="chart-klub" role="img" aria-label="Struktura prihodkov za ${k.ime}">Tortni diagram strukture prihodkov za ${k.ime} v letu 2025.</canvas></div>
+    <div class="table-wrap"><table>
+      <thead><tr><th style="text-align:left">Kategorija</th><th>2025</th><th>2024</th><th>Razlika €</th><th>%</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table></div>`;
+
+  destroyChart('chart-klub');
+  charts['chart-klub'] = new Chart(document.getElementById('chart-klub'), {
+    type: 'doughnut',
+    data: { labels: pieLabels, datasets: [{ data: pieVals, backgroundColor: ['#3266ad','#1d9e75','#d85a30','#ba7517','#533ab7','#888780'], borderWidth: 1 }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { font: { size: 12 }, boxWidth: 12 } } } }
+  });
+}
+
+function renderKat() {
+  const kat = document.getElementById('kat-select').value;
+  const keyMap = { skupaj: ['skupaj25','skupaj24'], dotacije_proracun: ['dotProracun25','dotProracun24'], donacije: ['donacije25','donacije24'], clanarine: ['clanarine25','clanarine24'], prodaja: ['prodaja25','prodaja24'], pridobitna: ['pridobitna25','pridobitna24'] };
+  const [k25, k24] = keyMap[kat];
+  const sorted = [...klubi].sort((a,b) => b[k25]-a[k25]);
+  destroyChart('chart-kat');
+  charts['chart-kat'] = new Chart(document.getElementById('chart-kat'), {
+    type: 'bar',
+    data: { labels: sorted.map(k=>k.ime), datasets: [
+      { label: '2025', data: sorted.map(k=>k[k25]), backgroundColor: '#3266ad', borderRadius: 3 },
+      { label: '2024', data: sorted.map(k=>k[k24]), backgroundColor: '#b4b2a9', borderRadius: 3 },
+    ]},
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } },
+      scales: { x: { ticks: { font: { size: 11 }, autoSkip: false, maxRotation: 45 } }, y: { ticks: { callback: v => fmtK(v), font: { size: 11 } } } } }
+  });
+}
+
+// init
+renderPregled();
+const sel = document.getElementById('klub-select');
+klubi.forEach((k,i) => { const o = document.createElement('option'); o.value=i; o.textContent=k.ime; sel.appendChild(o); });
+</script>
+</body>
+</html>
