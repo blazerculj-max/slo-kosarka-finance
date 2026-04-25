@@ -256,6 +256,7 @@ tr:hover td{background:var(--bg2)}
 <div id="pregled" class="section active">
   <div class="winners" id="winners"></div>
   <div class="metric-grid" id="top-metrics"></div>
+  <div id="liga-strip"></div>
   <div class="section-title">Skupni prihodki po klubih</div>
   <div class="legend">
     <span><span class="leg-box" style="background:#3266ad"></span>2025</span>
@@ -338,18 +339,54 @@ const CAT_DEFS=[
 ];
 
 const OPISI={
-  skupaj:{naslov:'Skupni prihodki od dejavnosti',opis:'Celoten denar, ki ga je klub pridobil v letu — iz vseh virov skupaj. Večji znesek še ne pomeni zdravega kluba — ključno je, iz česa ta denar prihaja.'},
-  a:{naslov:'Dotacije iz Fundacije za invalide',opis:'Sredstva Fundacije za financiranje invalidskih in humanitarnih organizacij RS. Klub jih dobi, če izvaja programe za osebe s posebnimi potrebami. V košarki večinoma nič.'},
-  b:{naslov:'Dotacije iz proračunskih sredstev',opis:'Subvencije občine, ministrstva za šport ali FISP. Visok delež pomeni odvisnost od lokalnih odločitev o proračunu — tveganje pri vsaki varčevalni politiki.'},
-  c:{naslov:'Dotacije iz fundacij in ustanov',opis:'Sredstva zasebnih fundacij, EU programov (Erasmus+) ali cerkvenih ustanov. Zahtevajo projektno prijavo in natančno poročanje.'},
-  c2:{naslov:'Donacije pravnih in fizičnih oseb',opis:'Sponzorska sredstva podjetij in posameznikov. Visok znesek pomeni dober odnos z lokalnim gospodarstvom, a nestabilnost: ko sponzor odide, luknja takoj boli.'},
-  d:{naslov:'Prispevki socialnih programov',opis:'Plačila za udeležbo v socialnih programih po naročilu občine. Pri večini košarkarskih klubov tega ni.'},
-  e:{naslov:'Članarine in prispevki članov',opis:'Letna članarina + vadnina. Eden najstabilnejših virov — vsak otrok plača 50–100 € mesečno. Visok delež pomeni finančno stabilnost kluba.'},
-  f:{naslov:'Prihodki od prodaje storitev',opis:'Šolnine, tabori, turnirji, najem dvoran, individualni treningi. Srce pridobitne dejavnosti. Najboljši znak zdravega poslovnega modela.'},
-  g:{naslov:'Prihodki od prodaje blaga',opis:'Dresi, oprema, žoge, navijački artikli. Manjši klubi tega nimajo skoraj nič; večji razvijejo pravi merchandising.'},
-  h:{naslov:'Ostali prihodki',opis:'Vstopnine, tombole, parkirišča, enkratni dogodki. Dobra postavka za "lucky shot" — visok znesek je treba razumeti kontekstualno.'},
-  pridobitna:{naslov:'Prihodki od pridobitne dejavnosti',opis:'Tisti del prihodkov, ki ga davčna uprava obravnava kot tržno dejavnost. Klub mora zanjo voditi ločeno računovodstvo in plačevati davek od dobička.'},
-  dotDrustev:{naslov:'Dotacije drugim društvom',opis:'Denar, ki ga klub sam nameni drugim organizacijam. Pogosto gre za krovno organizacijo, ki prerazporeja sredstva med podružnicami.'},
+  skupaj:{
+    naslov:'Skupni prihodki od dejavnosti',
+    opis:'Vse, kar je klub zaslužil ali pridobil v letu — vadnine, subvencije, sponzorji, donacije. Klubi 1. lige tipično potrebujejo 300–900 k€ za tekmovalno sezono (plače trenerjev, sodniški stroški, potni stroški, dvorana). Samo višina številke ne pove ničesar — pove jo struktura.'
+  },
+  a:{
+    naslov:'Dotacije iz Fundacije za invalide',
+    opis:'Namenjena društvom, ki izvajajo organizirane programe za osebe s posebnimi potrebami ali invalide. Za košarkarski klub velja samo, če ima aktivno sekcijo invalidskih košarkarjev (npr. košarka na vozičkih) ali vodi programe za gluhe/slepe. Brez tega programa: 0 €.'
+  },
+  b:{
+    naslov:'Dotacije iz proračunskih in javnih sredstev',
+    opis:'Javni denar iz treh glavnih virov: (1) občina — na podlagi letnega razpisa za šport, sorazmerno s številom registriranih tekmovalcev in kategorijami; (2) FISP / Fundacija za šport — državna sredstva za sofinanciranje delovanja in tekmovanj; (3) ministrstvo za šport pri posebnih programih. Pogoji so strogi — poraba mora biti namenska, zahteva se letno poročilo. Odvisnost od tega vira je tvegana: vsak proračunski rez udari neposredno.'
+  },
+  c:{
+    naslov:'Dotacije iz fundacij, skladov in ustanov',
+    opis:'Projektna sredstva zasebnih ali javnih fundacij, ki niso proračun: npr. Fundacija za šport pri EU programih, Erasmus+ Sport, Olimpijski komite RS (za posebne projekte), lokalni skladi ali cerkvene ustanove. Zahtevajo natančno projektno prijavo, vmesna poročila in finančno dokumentacijo. Znesek je ponavadi vezan na točno določen projekt ali aktivnost — ne gre za splošno delovanje kluba.'
+  },
+  c2:{
+    naslov:'Donacije pravnih in fizičnih oseb',
+    opis:'Sponzorska pogodba ali donacija brez neposredne protistoritve. Pravne osebe (podjetja) najpogosteje dobijo vidnost v zameno — logo na dresu, reklamna tabla ob igrišču, omemba na družbenih omrežjih, VIP vstopnice. Fizične osebe so pogosto starši ali lokalni navijači. Razlika med "donacijo" in "sponzorstvom" je davčna: sponzorstvo je storitev (DDV), donacija je brezpogojni prispevek. Visok znesek = dober odnos z lokalnim okoljem, a velika ranljivost: ko glavni sponzor odide, nastane resna finančna luknja.'
+  },
+  d:{
+    naslov:'Prispevki uporabnikov posebnih socialnih programov',
+    opis:'Plačila udeležencev v posebnih socialnih programih, ki jih naroča občina ali ministrstvo — npr. brezplačna košarka za otroke iz socialno ogroženih družin, ki jo subvencionira občina, klub pa od nje pobere pavšal. V praksi ima to pri košarkarskih klubih skoraj nihče — zahteva posebno pogodbo z javnim naročnikom in ločeno vodenje programa.'
+  },
+  e:{
+    naslov:'Članarine in prispevki članov',
+    opis:'Sestavljeno iz dveh virov: (1) vadnina — mesečni prispevek staršev za trening otroka v mlajših kategorijah (U8 do U18), tipično 50–120 €/mes.; (2) letna članarina — formalni prispevek registriranega člana društva, pogosto simboličnih 20–50 €. Oba skupaj sta najstabilnejši vir prihodkov. Če je ta postavka nizka, klub vadnine bodisi sploh ne zaračunava bodisi jih "skrije" pod prodajo storitev (točka f). Velik padec te postavke je opozorilni znak — manj otrok v procesu.'
+  },
+  f:{
+    naslov:'Prihodki od prodaje storitev',
+    opis:'Najpomembnejša postavka pridobitne dejavnosti košarkarskega kluba. Vključuje: košarkarsko šolo (organizirani treningi za netekmovalne udeležence), poletne košarkarske tabore, programe za šole (dopoldanski obiski za razrede), organizacijo turnirjev in pokusov, najem parketišča tretjim (fitnes, rekreativci, drugi klubi), individualne treninge. Klub za to izda račun — če je zavezanec za DDV, obračuna 9,5 % ali 22 %. Visok znesek tu pomeni, da klub aktivno trži svoje znanje in infrastrukturo.'
+  },
+  g:{
+    naslov:'Prihodki od prodaje blaga in materiala',
+    opis:'Prodaja materialnih dobrin: košarkarski dresi in oprema (prodaja navijačem ali staršem), žoge, torbe, kape, navijački artikli s klubskim logotipom, pa tudi prodaja presežnega materiala (stara oprema, odpisane žoge). Večina manjših klubov tega nima sistematično — se pojavi ob posebnih akcijah ali ob sezoni. Klubi z razvito navijačko kulturo ali večjim številom članov lahko iz tega naredijo reden vir.'
+  },
+  h:{
+    naslov:'Ostali prihodki od dejavnosti',
+    opis:'Vse, kar ne sodi v zgornje kategorije: vstopnine za domače tekme (pri 1. ligi redna postavka), prihodki iz reklamnih tabel ob igrišču (oglaševalski prostor vzdolž parketa), povračilo stroškov gostujočih ekip (potni stroški, prehrana), prihodki iz tombole ali dobrodelnih prireditev, morebitni prihodki iz najema poslovnih prostorov v dvorani. Pri Hopsiju in Slovanu je ta postavka zelo visoka — najverjetneje gre za najemnine ali vstopnine, ki jih klub sistematično obračunava.'
+  },
+  pridobitna:{
+    naslov:'Prihodki od pridobitne dejavnosti',
+    opis:'Podmnožica vseh prihodkov — tisti del, ki ga davčna uprava šteje kot tržno (pridobitno) dejavnost. Za košarkarski klub sem sodijo: prodaja treninga na trgu (košarkarska šola, tabori, najem parketa), prodaja blaga (dresi, oprema), vstopnine. Klub mora zanjo voditi ločene poslovne knjige in plačati davek od dobička, če presega stroške tega dela. Pozor: da je tu 0 €, ne pomeni, da klub ne dela nič komercialno — morda preprosto ne loči računovodsko, kar je strokovna napaka.'
+  },
+  dotDrustev:{
+    naslov:'Dotacije drugim društvom in pravnim osebam',
+    opis:'Denar, ki ga klub sam nakaže drugim organizacijam. V košarki se to redko pojavi — kadar pa se, gre najpogosteje za: krovno zvezo (KZS ali regionalna zveza), ki ji klub pošlje del sredstev za skupne projekte; partnerski klub ali šolsko sekcijo, ki jo matični klub financira; dobrodelno organizacijo. Triglav ima tu 1.250 € — verjetno prispevek zvezi ali partnerski organizaciji.'
+  },
 };
 
 let activeClusters=ALL_KLUBI.map(k=>k.ime);
@@ -540,6 +577,24 @@ function renderPregled(){
     animateCount(document.getElementById('pm-avg'),(t25/klubi.length)/1000,'','k€');
   },50);
 
+  // per-liga comparison strip
+  const ligaColors={1:'#d4956a',2:'#3266ad',3:'#1d9e75'};
+  const ligaStats=[1,2,3].map(l=>{
+    const lk=klubi.filter(k=>k.liga===l);
+    if(!lk.length)return null;
+    return{l,n:lk.length,tot:lk.reduce((s,k)=>s+k.skupaj25,0),avg:lk.reduce((s,k)=>s+k.skupaj25,0)/lk.length};
+  }).filter(Boolean);
+  document.getElementById('liga-strip').innerHTML=ligaStats.length>1?`
+    <div class="section-title">Primerjava po ligah</div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:1.5rem">
+      ${ligaStats.map(ls=>`<div style="flex:1;min-width:130px;background:var(--bg2);border-radius:var(--radius);padding:12px 16px;border-left:3px solid ${ligaColors[ls.l]}">
+        <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">${ls.l}. liga · ${ls.n} klub${ls.n===1?'':'ov'}</div>
+        <div style="font-size:18px;font-weight:500">${fmtK(ls.tot)}</div>
+        <div style="font-size:11px;color:var(--hint);margin-top:2px">povp. ${fmtK(ls.avg)}/klub</div>
+      </div>`).join('')}
+    </div>`:'';
+
+
   const sorted=[...klubi].sort((a,b)=>b.skupaj25-a.skupaj25);
   dc('chart-pregled');
   charts['chart-pregled']=new Chart(document.getElementById('chart-pregled'),{type:'bar',
@@ -710,13 +765,13 @@ function renderPrimerjava(){
 
   document.getElementById('table-primerjava').innerHTML=`
     <thead><tr>${ths}</tr></thead>
-    <thead><tr class="totals-row">${cols.map((c,i)=>{
-      if(c.key==='ime') return`<th style="text-align:left">SKUPAJ</th>`;
-      if(c.key==='_trend') return`<th></th>`;
+    <tbody>${rows}</tbody>
+    <tfoot><tr class="totals-row">${cols.map((c)=>{
+      if(c.key==='ime') return`<td>SKUPAJ</td>`;
+      if(c.key==='_trend') return`<td></td>`;
       const v=totals[c.key]||0;
-      return`<th style="font-weight:600;color:var(--text)">${v>0?fmt(v):''}</th>`;
-    }).join('')}</tr></thead>
-    <tbody>${rows}</tbody>`;
+      return`<td data-raw="${v}" style="font-weight:600">${v>0?fmt(v):''}</td>`;
+    }).join('')}</tr></tfoot>`;
 
   // heatmap on numeric columns
   setTimeout(()=>{
@@ -747,6 +802,10 @@ function renderKlub(){
   const dSign=d>=0?'+':'';
   const dCol=d>=0?'k-pill-up':'k-pill-dn';
   const dPct=k.skupaj24>0?((d/k.skupaj24)*100).toFixed(1):'—';
+  // rank within liga
+  const ligaKlubi=[...ALL_KLUBI].filter(x=>x.liga===k.liga).sort((a,b)=>b.skupaj25-a.skupaj25);
+  const ligaRank=ligaKlubi.findIndex(x=>x.ime===k.ime)+1;
+  const ligaRankStr=`${ligaRank}. v ${k.liga}. ligi`;
   const pridPct25=k.skupaj25>0?(k.pridobitna25/k.skupaj25*100):0;
   const pridPct24=k.skupaj24>0?(k.pridobitna24/k.skupaj24*100):0;
   const g25=gaugeArc(pridPct25),g24=gaugeArc(pridPct24);
@@ -805,6 +864,7 @@ function renderKlub(){
   <div class="k-hero k-animate">
     <div class="k-hero-accent"></div>
     <div class="k-hero-name">${k.ime} ${ligaBadge(k.liga)}</div>
+    <div style="font-size:12px;color:rgba(240,237,232,0.4);margin-bottom:1rem;margin-top:-0.75rem">${ligaRankStr} po skupnih prihodkih 2025</div>
     <div class="k-hero-pills">
       <div class="k-pill"><div class="k-pill-label">Prihodki 2025</div><div class="k-pill-value" id="anim-skupaj">—</div><div class="k-pill-sub k-pill-neu">skupaj</div></div>
       <div class="k-pill"><div class="k-pill-label">Sprememba vs 2024</div><div class="k-pill-value ${dCol}" id="anim-delta">—</div><div class="k-pill-sub ${dCol}">${dSign}${dPct}%</div></div>
