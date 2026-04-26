@@ -222,6 +222,7 @@ tr:hover td{background:var(--bg2)}
   <button class="tab" onclick="showTab('struktura',this)">Struktura</button>
   <button class="tab" onclick="showTab('primerjava',this)">Primerjava</button>
   <button class="tab" onclick="showTab('klub',this)">Posamezni klub</button>
+  <button class="tab" onclick="showTab('zgodovina',this)">Zgodovinski podatki</button>
 </div>
 
 <div class="filter-panel">
@@ -303,29 +304,85 @@ tr:hover td{background:var(--bg2)}
   </div>
   <div id="klub-content"></div>
 </div>
+
+<!-- ZGODOVINA -->
+<div id="zgodovina" class="section">
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:1rem;flex-wrap:wrap">
+    <div class="filter-title" style="white-space:nowrap">Prikaži metrike</div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap" id="zg-metric-btns">
+      <button class="liga-btn all active" onclick="zgSetMetric('skupaj',this)">Skupni prihodki</button>
+      <button class="liga-btn l2" onclick="zgSetMetric('pridobitna',this)">Pridobitna dejavnost</button>
+      <button class="liga-btn l1" onclick="zgSetMetric('dotProracun',this)">Dotacije proračun</button>
+      <button class="liga-btn l3" onclick="zgSetMetric('donacije',this)">Donacije</button>
+    </div>
+  </div>
+  <p style="font-size:12px;color:var(--muted);margin-bottom:1rem">Prikazani so samo klubi s historičnimi podatki (2022–2025). Kliknite na legendo za skrivanje posamezne linije.</p>
+  <div class="chart-wrap" style="height:380px"><canvas id="chart-zgodovina" role="img" aria-label="Zgodovinski podatki klubov">Večletni razvoj prihodkov košarkarskih klubov.</canvas></div>
+  <div class="section-title" style="margin-top:0">Tabela po sezonah</div>
+  <div class="table-wrap"><table id="table-zgodovina"></table></div>
+</div>
 </div>
 
 <script>
 const ALL_KLUBI=[
-  {liga:1,ime:'Triglav',    skupaj25:500647.45,skupaj24:463974.38,dotProracun25:59551.85,dotProracun24:52207.42,dotFund25:0,dotFund24:0,donacije25:97464,donacije24:53590,clanarine25:7920,clanarine24:5850,prodaja25:335711.60,prodaja24:351078.96,prodajaBlago25:0,prodajaBlago24:0,ostali25:0,ostali24:0,pridobitna25:335711.60,pridobitna24:351078.96,dotDrustev25:1250,dotDrustev24:400},
-  {liga:1,ime:'Helios',     skupaj25:786330.02,skupaj24:903059.39,dotProracun25:55387.53,dotProracun24:59981.70,dotFund25:0,dotFund24:0,donacije25:41799.77,donacije24:38386.23,clanarine25:2800,clanarine24:2840,prodaja25:676416.46,prodaja24:769733.99,prodajaBlago25:3658.73,prodajaBlago24:14044.94,ostali25:6267.53,ostali24:18072.53,pridobitna25:10576.33,pridobitna24:18857.81,dotDrustev25:0,dotDrustev24:0},
-  {liga:1,ime:'Podčetrtek', skupaj25:250043.42,skupaj24:227840.01,dotProracun25:22600,dotProracun24:22300.01,dotFund25:0,dotFund24:0,donacije25:118350,donacije24:99100,clanarine25:0,clanarine24:0,prodaja25:109093.42,prodaja24:106440,prodajaBlago25:0,prodajaBlago24:0,ostali25:0,ostali24:0,pridobitna25:109093.42,pridobitna24:106400.01,dotDrustev25:0,dotDrustev24:0},
-  {liga:1,ime:'Ilirija',    skupaj25:945976.26,skupaj24:651564.37,dotProracun25:25221.84,dotProracun24:14585,dotFund25:0,dotFund24:0,donacije25:399519.77,donacije24:398480,clanarine25:4025,clanarine24:4410,prodaja25:517209.65,prodaja24:226618.03,prodajaBlago25:0,prodajaBlago24:0,ostali25:0,ostali24:7471.34,pridobitna25:517209.65,pridobitna24:234089.37,dotDrustev25:0,dotDrustev24:0},
-  {liga:1,ime:'Šenčur',     skupaj25:443839.82,skupaj24:536469.51,dotProracun25:66328.66,dotProracun24:67956.91,dotFund25:0,dotFund24:0,donacije25:11000,donacije24:0,clanarine25:1875,clanarine24:1245,prodaja25:364453.05,prodaja24:467267.60,prodajaBlago25:0,prodajaBlago24:0,ostali25:183.11,ostali24:0,pridobitna25:364636.16,pridobitna24:467267.60,dotDrustev25:0,dotDrustev24:0},
-  {liga:1,ime:'Šentjur',    skupaj25:508858.67,skupaj24:478360.35,dotProracun25:107984.75,dotProracun24:101680.67,dotFund25:0,dotFund24:0,donacije25:500,donacije24:100,clanarine25:0,clanarine24:0,prodaja25:400373.92,prodaja24:376579.68,prodajaBlago25:0,prodajaBlago24:0,ostali25:0,ostali24:0,pridobitna25:400373.92,pridobitna24:376579.68,dotDrustev25:0,dotDrustev24:0},
-  {liga:1,ime:'Rogaška',    skupaj25:372372.57,skupaj24:329770.90,dotProracun25:68021.17,dotProracun24:55061.63,dotFund25:0,dotFund24:0,donacije25:10360,donacije24:3900,clanarine25:0,clanarine24:0,prodaja25:290389.21,prodaja24:269958.57,prodajaBlago25:0,prodajaBlago24:0,ostali25:3602.19,ostali24:850.70,pridobitna25:293991.40,pridobitna24:270809.27,dotDrustev25:0,dotDrustev24:0},
-  {liga:1,ime:'Laško',      skupaj25:400505.94,skupaj24:268207.49,dotProracun25:66282.47,dotProracun24:35323.44,dotFund25:0,dotFund24:0,donacije25:78745,donacije24:19286.17,clanarine25:3035,clanarine24:15448.97,prodaja25:252442.43,prodaja24:198115.20,prodajaBlago25:0,prodajaBlago24:16.39,ostali25:1.04,ostali24:17.32,pridobitna25:247942.43,pridobitna24:187534.27,dotDrustev25:0,dotDrustev24:0},
-  {liga:1,ime:'Hopsi',      skupaj25:379435.71,skupaj24:293535.31,dotProracun25:136787.30,dotProracun24:120000,dotFund25:0,dotFund24:0,donacije25:45970,donacije24:16420.51,clanarine25:220,clanarine24:120,prodaja25:0,prodaja24:0,prodajaBlago25:0,prodajaBlago24:0,ostali25:196458.41,ostali24:156994.80,pridobitna25:176947.57,pridobitna24:156994.80,dotDrustev25:0,dotDrustev24:0},
-  {liga:2,ime:'Celje',      skupaj25:158764.15,skupaj24:153416.89,dotProracun25:22641.14,dotProracun24:29911.46,dotFund25:0,dotFund24:0,donacije25:3050,donacije24:6778.77,clanarine25:46401.97,clanarine24:51640,prodaja25:86534.70,prodaja24:65086.66,prodajaBlago25:0,prodajaBlago24:0,ostali25:136.34,ostali24:0,pridobitna25:86534.70,pridobitna24:65086.66,dotDrustev25:0,dotDrustev24:0},
-  {liga:3,ime:'Ajdovščina', skupaj25:379177.28,skupaj24:313217.53,dotProracun25:72693.14,dotProracun24:76912.13,dotFund25:0,dotFund24:0,donacije25:29600,donacije24:24800,clanarine25:78094.18,clanarine24:84977.77,prodaja25:198789.96,prodaja24:126527.63,prodajaBlago25:0,prodajaBlago24:0,ostali25:0,ostali24:0,pridobitna25:198789.96,pridobitna24:126527.63,dotDrustev25:0,dotDrustev24:0},
-  {liga:2,ime:'Loka',       skupaj25:484130.06,skupaj24:408952.46,dotProracun25:87053.78,dotProracun24:68123.25,dotFund25:0,dotFund24:0,donacije25:38394.61,donacije24:16248,clanarine25:5045,clanarine24:3330,prodaja25:353636.67,prodaja24:321251.21,prodajaBlago25:0,prodajaBlago24:0,ostali25:0,ostali24:0,pridobitna25:353636.67,pridobitna24:321251.21,dotDrustev25:0,dotDrustev24:0},
-  {liga:2,ime:'Gorica',     skupaj25:260901.64,skupaj24:288597.72,dotProracun25:42854.25,dotProracun24:58865.18,dotFund25:42330.92,dotFund24:26648.12,donacije25:25427.98,donacije24:29498.73,clanarine25:6800,clanarine24:14441.66,prodaja25:143375.52,prodaja24:159144.03,prodajaBlago25:112.97,prodajaBlago24:0,ostali25:0,ostali24:0,pridobitna25:143488.49,pridobitna24:159143.54,dotDrustev25:0,dotDrustev24:0},
-  {liga:2,ime:'Plama',      skupaj25:153468.77,skupaj24:148329.18,dotProracun25:46527,dotProracun24:46026,dotFund25:0,dotFund24:0,donacije25:2600,donacije24:13300,clanarine25:49933.61,clanarine24:45785.70,prodaja25:54408.16,prodaja24:43217.48,prodajaBlago25:0,prodajaBlago24:0,ostali25:0,ostali24:0,pridobitna25:54408.16,pridobitna24:43217.48,dotDrustev25:0,dotDrustev24:0},
-  {liga:2,ime:'Vrhnika',    skupaj25:201643.28,skupaj24:169980.50,dotProracun25:37896.97,dotProracun24:35984.03,dotFund25:0,dotFund24:0,donacije25:13110,donacije24:2900,clanarine25:90708.80,clanarine24:88869.24,prodaja25:0,prodaja24:0,prodajaBlago25:0,prodajaBlago24:0,ostali25:59927.51,ostali24:42227.23,pridobitna25:0,pridobitna24:0,dotDrustev25:0,dotDrustev24:0},
-  {liga:2,ime:'Slovan',     skupaj25:254367.30,skupaj24:187775.25,dotProracun25:54760,dotProracun24:51330.40,dotFund25:0,dotFund24:0,donacije25:4368.85,donacije24:6487.84,clanarine25:7360,clanarine24:7400,prodaja25:59155.55,prodaja24:0,prodajaBlago25:5082,prodajaBlago24:5537,ostali25:123640.90,ostali24:117020.01,pridobitna25:64237.55,pridobitna24:7067,dotDrustev25:0,dotDrustev24:0},
-  {liga:2,ime:'Postojna',   skupaj25:144021.23,skupaj24:139287.87,dotProracun25:57134.37,dotProracun24:51135.93,dotFund25:4610,dotFund24:9300,donacije25:11551,donacije24:1500,clanarine25:38245,clanarine24:42135,prodaja25:32480.86,prodaja24:35216.94,prodajaBlago25:0,prodajaBlago24:0,ostali25:0,ostali24:0,pridobitna25:0,pridobitna24:0,dotDrustev25:0,dotDrustev24:0},
-  {liga:2,ime:'Ljubljana',  skupaj25:224401.06,skupaj24:171649.94,dotProracun25:51380,dotProracun24:47860,dotFund25:0,dotFund24:0,donacije25:52708.40,donacije24:26908.89,clanarine25:5840,clanarine24:8240,prodaja25:114472.35,prodaja24:88641.05,prodajaBlago25:0,prodajaBlago24:0,ostali25:0.31,ostali24:0,pridobitna25:0,pridobitna24:0,dotDrustev25:0,dotDrustev24:0},
-  {liga:2,ime:'Grosuplje',  skupaj25:201411.86,skupaj24:187271.93,dotProracun25:55952.82,dotProracun24:51405.23,dotFund25:0,dotFund24:0,donacije25:12007,donacije24:12790,clanarine25:6615,clanarine24:7285.05,prodaja25:126837.04,prodaja24:115791.65,prodajaBlago25:0,prodajaBlago24:0,ostali25:0,ostali24:0,pridobitna25:126837.04,pridobitna24:115791.65,dotDrustev25:0,dotDrustev24:0},
+  {liga:1,ime:'Triglav',    skupaj25:500647.45,skupaj24:463974.38,dotProracun25:59551.85,dotProracun24:52207.42,dotFund25:0,dotFund24:0,donacije25:97464,donacije24:53590,clanarine25:7920,clanarine24:5850,prodaja25:335711.60,prodaja24:351078.96,prodajaBlago25:0,prodajaBlago24:0,ostali25:0,ostali24:0,pridobitna25:335711.60,pridobitna24:351078.96,dotDrustev25:1250,dotDrustev24:400,
+    hist:[
+      {leto:2022,skupaj:195746.76,dotProracun:44145.29,dotFund:10000,donacije:3000,clanarine:27030,prodaja:111571.47,prodajaBlago:0,ostali:0,pridobitna:111571.47},
+      {leto:2023,skupaj:322866.08,dotProracun:49768.44,dotFund:0,donacije:40531.38,clanarine:27602,prodaja:204964.26,prodajaBlago:0,ostali:0,pridobitna:204964.26},
+    ]},
+  {liga:1,ime:'Helios',     skupaj25:786330.02,skupaj24:903059.39,dotProracun25:55387.53,dotProracun24:59981.70,dotFund25:0,dotFund24:0,donacije25:41799.77,donacije24:38386.23,clanarine25:2800,clanarine24:2840,prodaja25:676416.46,prodaja24:769733.99,prodajaBlago25:3658.73,prodajaBlago24:14044.94,ostali25:6267.53,ostali24:18072.53,pridobitna25:10576.33,pridobitna24:18857.81,dotDrustev25:0,dotDrustev24:0,
+    hist:[
+      {leto:2022,skupaj:998225.15,dotProracun:62888.06,dotFund:0,donacije:21416.38,clanarine:2180,prodaja:904291.21,prodajaBlago:2136.84,ostali:5312.66,pridobitna:10476.02},
+      {leto:2023,skupaj:994915.87,dotProracun:63548.63,dotFund:0,donacije:23403.74,clanarine:2160,prodaja:887080.72,prodajaBlago:7152.23,ostali:11570.55,pridobitna:12293.50},
+    ]},
+  {liga:1,ime:'Podčetrtek', skupaj25:250043.42,skupaj24:227840.01,dotProracun25:22600,dotProracun24:22300.01,dotFund25:0,dotFund24:0,donacije25:118350,donacije24:99100,clanarine25:0,clanarine24:0,prodaja25:109093.42,prodaja24:106440,prodajaBlago25:0,prodajaBlago24:0,ostali25:0,ostali24:0,pridobitna25:109093.42,pridobitna24:106400.01,dotDrustev25:0,dotDrustev24:0,
+    hist:[
+      {leto:2022,skupaj:242171.29,dotProracun:20190,dotFund:0,donacije:110000,clanarine:0,prodaja:111273.33,prodajaBlago:0,ostali:707.96,pridobitna:96381.29},
+      {leto:2023,skupaj:246338.99,dotProracun:21050,dotFund:0,donacije:102000,clanarine:0,prodaja:123288.99,prodajaBlago:0,ostali:0,pridobitna:118288.99},
+    ]},
+  {liga:1,ime:'Ilirija',    skupaj25:945976.26,skupaj24:651564.37,dotProracun25:25221.84,dotProracun24:14585,dotFund25:0,dotFund24:0,donacije25:399519.77,donacije24:398480,clanarine25:4025,clanarine24:4410,prodaja25:517209.65,prodaja24:226618.03,prodajaBlago25:0,prodajaBlago24:0,ostali25:0,ostali24:7471.34,pridobitna25:517209.65,pridobitna24:234089.37,dotDrustev25:0,dotDrustev24:0,
+    hist:[
+      {leto:2022,skupaj:355652.09,dotProracun:26680.53,dotFund:0,donacije:54500,clanarine:2520,prodaja:242169.07,prodajaBlago:0,ostali:29782.49,pridobitna:271949.56},
+      {leto:2023,skupaj:410581.67,dotProracun:26280,dotFund:0,donacije:243000,clanarine:4130,prodaja:133171.67,prodajaBlago:0,ostali:4000,pridobitna:137171.67},
+    ]},
+  {liga:1,ime:'Šenčur',     skupaj25:443839.82,skupaj24:536469.51,dotProracun25:66328.66,dotProracun24:67956.91,dotFund25:0,dotFund24:0,donacije25:11000,donacije24:0,clanarine25:1875,clanarine24:1245,prodaja25:364453.05,prodaja24:467267.60,prodajaBlago25:0,prodajaBlago24:0,ostali25:183.11,ostali24:0,pridobitna25:364636.16,pridobitna24:467267.60,dotDrustev25:0,dotDrustev24:0,
+    hist:[
+      {leto:2022,skupaj:437544.82,dotProracun:42441.96,dotFund:0,donacije:500,clanarine:1410,prodaja:392204.93,prodajaBlago:0,ostali:987.93,pridobitna:393192.86},
+      {leto:2023,skupaj:431636.91,dotProracun:55280.44,dotFund:0,donacije:1600,clanarine:1455,prodaja:372649.56,prodajaBlago:0,ostali:651.91,pridobitna:373301.47},
+    ]},
+  {liga:1,ime:'Šentjur',    skupaj25:508858.67,skupaj24:478360.35,dotProracun25:107984.75,dotProracun24:101680.67,dotFund25:0,dotFund24:0,donacije25:500,donacije24:100,clanarine25:0,clanarine24:0,prodaja25:400373.92,prodaja24:376579.68,prodajaBlago25:0,prodajaBlago24:0,ostali25:0,ostali24:0,pridobitna25:400373.92,pridobitna24:376579.68,dotDrustev25:0,dotDrustev24:0,
+    hist:[
+      {leto:2022,skupaj:437720.48,dotProracun:98261.36,dotFund:0,donacije:0,clanarine:3630,prodaja:335829.12,prodajaBlago:0,ostali:0,pridobitna:335829.12},
+      {leto:2023,skupaj:437982.67,dotProracun:102625.05,dotFund:0,donacije:80,clanarine:0,prodaja:335277.62,prodajaBlago:0,ostali:0,pridobitna:335277.62},
+    ]},
+  {liga:1,ime:'Rogaška',    skupaj25:372372.57,skupaj24:329770.90,dotProracun25:68021.17,dotProracun24:55061.63,dotFund25:0,dotFund24:0,donacije25:10360,donacije24:3900,clanarine25:0,clanarine24:0,prodaja25:290389.21,prodaja24:269958.57,prodajaBlago25:0,prodajaBlago24:0,ostali25:3602.19,ostali24:850.70,pridobitna25:293991.40,pridobitna24:270809.27,dotDrustev25:0,dotDrustev24:0,
+    hist:[
+      {leto:2022,skupaj:358600.60,dotProracun:57761.85,dotFund:0,donacije:8700,clanarine:0,prodaja:292136.70,prodajaBlago:0,ostali:2.05,pridobitna:292136.72},
+      {leto:2023,skupaj:302176.02,dotProracun:59613.31,dotFund:0,donacije:16090,clanarine:0,prodaja:226472.71,prodajaBlago:0,ostali:0,pridobitna:226472.71},
+    ]},
+  {liga:1,ime:'Laško',      skupaj25:400505.94,skupaj24:268207.49,dotProracun25:66282.47,dotProracun24:35323.44,dotFund25:0,dotFund24:0,donacije25:78745,donacije24:19286.17,clanarine25:3035,clanarine24:15448.97,prodaja25:252442.43,prodaja24:198115.20,prodajaBlago25:0,prodajaBlago24:16.39,ostali25:1.04,ostali24:17.32,pridobitna25:247942.43,pridobitna24:187534.27,dotDrustev25:0,dotDrustev24:0,
+    hist:[
+      {leto:2022,skupaj:247381.25,dotProracun:28309,dotFund:0,donacije:15048.78,clanarine:21055.75,prodaja:0,prodajaBlago:182967.72,ostali:0,pridobitna:200298.47},
+      {leto:2023,skupaj:236213.32,dotProracun:28325,dotFund:0,donacije:1971.62,clanarine:20320,prodaja:185596.70,prodajaBlago:0,ostali:0,pridobitna:203066.70},
+    ]},
+  {liga:1,ime:'Hopsi',      skupaj25:379435.71,skupaj24:293535.31,dotProracun25:136787.30,dotProracun24:120000,dotFund25:0,dotFund24:0,donacije25:45970,donacije24:16420.51,clanarine25:220,clanarine24:120,prodaja25:0,prodaja24:0,prodajaBlago25:0,prodajaBlago24:0,ostali25:196458.41,ostali24:156994.80,pridobitna25:176947.57,pridobitna24:156994.80,dotDrustev25:0,dotDrustev24:0,hist:[]},
+  {liga:2,ime:'Celje',      skupaj25:158764.15,skupaj24:153416.89,dotProracun25:22641.14,dotProracun24:29911.46,dotFund25:0,dotFund24:0,donacije25:3050,donacije24:6778.77,clanarine25:46401.97,clanarine24:51640,prodaja25:86534.70,prodaja24:65086.66,prodajaBlago25:0,prodajaBlago24:0,ostali25:136.34,ostali24:0,pridobitna25:86534.70,pridobitna24:65086.66,dotDrustev25:0,dotDrustev24:0,hist:[]},
+  {liga:3,ime:'Ajdovščina', skupaj25:379177.28,skupaj24:313217.53,dotProracun25:72693.14,dotProracun24:76912.13,dotFund25:0,dotFund24:0,donacije25:29600,donacije24:24800,clanarine25:78094.18,clanarine24:84977.77,prodaja25:198789.96,prodaja24:126527.63,prodajaBlago25:0,prodajaBlago24:0,ostali25:0,ostali24:0,pridobitna25:198789.96,pridobitna24:126527.63,dotDrustev25:0,dotDrustev24:0,hist:[]},
+  {liga:2,ime:'Loka',       skupaj25:484130.06,skupaj24:408952.46,dotProracun25:87053.78,dotProracun24:68123.25,dotFund25:0,dotFund24:0,donacije25:38394.61,donacije24:16248,clanarine25:5045,clanarine24:3330,prodaja25:353636.67,prodaja24:321251.21,prodajaBlago25:0,prodajaBlago24:0,ostali25:0,ostali24:0,pridobitna25:353636.67,pridobitna24:321251.21,dotDrustev25:0,dotDrustev24:0,hist:[]},
+  {liga:2,ime:'Gorica',     skupaj25:260901.64,skupaj24:288597.72,dotProracun25:42854.25,dotProracun24:58865.18,dotFund25:42330.92,dotFund24:26648.12,donacije25:25427.98,donacije24:29498.73,clanarine25:6800,clanarine24:14441.66,prodaja25:143375.52,prodaja24:159144.03,prodajaBlago25:112.97,prodajaBlago24:0,ostali25:0,ostali24:0,pridobitna25:143488.49,pridobitna24:159143.54,dotDrustev25:0,dotDrustev24:0,hist:[]},
+  {liga:2,ime:'Plama',      skupaj25:153468.77,skupaj24:148329.18,dotProracun25:46527,dotProracun24:46026,dotFund25:0,dotFund24:0,donacije25:2600,donacije24:13300,clanarine25:49933.61,clanarine24:45785.70,prodaja25:54408.16,prodaja24:43217.48,prodajaBlago25:0,prodajaBlago24:0,ostali25:0,ostali24:0,pridobitna25:54408.16,pridobitna24:43217.48,dotDrustev25:0,dotDrustev24:0,hist:[]},
+  {liga:2,ime:'Vrhnika',    skupaj25:201643.28,skupaj24:169980.50,dotProracun25:37896.97,dotProracun24:35984.03,dotFund25:0,dotFund24:0,donacije25:13110,donacije24:2900,clanarine25:90708.80,clanarine24:88869.24,prodaja25:0,prodaja24:0,prodajaBlago25:0,prodajaBlago24:0,ostali25:59927.51,ostali24:42227.23,pridobitna25:0,pridobitna24:0,dotDrustev25:0,dotDrustev24:0,hist:[]},
+  {liga:2,ime:'Slovan',     skupaj25:254367.30,skupaj24:187775.25,dotProracun25:54760,dotProracun24:51330.40,dotFund25:0,dotFund24:0,donacije25:4368.85,donacije24:6487.84,clanarine25:7360,clanarine24:7400,prodaja25:59155.55,prodaja24:0,prodajaBlago25:5082,prodajaBlago24:5537,ostali25:123640.90,ostali24:117020.01,pridobitna25:64237.55,pridobitna24:7067,dotDrustev25:0,dotDrustev24:0,hist:[]},
+  {liga:2,ime:'Postojna',   skupaj25:144021.23,skupaj24:139287.87,dotProracun25:57134.37,dotProracun24:51135.93,dotFund25:4610,dotFund24:9300,donacije25:11551,donacije24:1500,clanarine25:38245,clanarine24:42135,prodaja25:32480.86,prodaja24:35216.94,prodajaBlago25:0,prodajaBlago24:0,ostali25:0,ostali24:0,pridobitna25:0,pridobitna24:0,dotDrustev25:0,dotDrustev24:0,hist:[]},
+  {liga:2,ime:'Ljubljana',  skupaj25:224401.06,skupaj24:171649.94,dotProracun25:51380,dotProracun24:47860,dotFund25:0,dotFund24:0,donacije25:52708.40,donacije24:26908.89,clanarine25:5840,clanarine24:8240,prodaja25:114472.35,prodaja24:88641.05,prodajaBlago25:0,prodajaBlago24:0,ostali25:0.31,ostali24:0,pridobitna25:0,pridobitna24:0,dotDrustev25:0,dotDrustev24:0,hist:[]},
+  {liga:2,ime:'Grosuplje',  skupaj25:201411.86,skupaj24:187271.93,dotProracun25:55952.82,dotProracun24:51405.23,dotFund25:0,dotFund24:0,donacije25:12007,donacije24:12790,clanarine25:6615,clanarine24:7285.05,prodaja25:126837.04,prodaja24:115791.65,prodajaBlago25:0,prodajaBlago24:0,ostali25:0,ostali24:0,pridobitna25:126837.04,pridobitna24:115791.65,dotDrustev25:0,dotDrustev24:0,hist:[]},
+  {liga:2,ime:'Idrija',     skupaj25:167262.47,skupaj24:158643.32,dotProracun25:15557.74,dotProracun24:14892.24,dotFund25:0,dotFund24:0,donacije25:23762,donacije24:43576.54,clanarine25:1900,clanarine24:1905,prodaja25:126042.73,prodaja24:98269.54,prodajaBlago25:0,prodajaBlago24:0,ostali25:0,ostali24:0,pridobitna25:126042.73,pridobitna24:98269.54,dotDrustev25:0,dotDrustev24:0,
+    hist:[
+      {leto:2022,skupaj:121486.79,dotProracun:13131.43,dotFund:0,donacije:12548.36,clanarine:2415,prodaja:83222,prodajaBlago:0,ostali:10170,pridobitna:93392},
+      {leto:2023,skupaj:155206.01,dotProracun:13805.28,dotFund:0,donacije:28311.15,clanarine:2310,prodaja:110779.58,prodajaBlago:0,ostali:0,pridobitna:110779.58},
+    ]},
+  {liga:2,ime:'Ježica',     skupaj25:210132.29,skupaj24:216524.74,dotProracun25:34512,dotProracun24:29682.45,dotFund25:0,dotFund24:0,donacije25:5724,donacije24:12017.28,clanarine25:9310,clanarine24:9150.01,prodaja25:160105.25,prodaja24:165480,prodajaBlago25:0,prodajaBlago24:0,ostali25:481.04,ostali24:195,pridobitna25:40785.25,pridobitna24:35750,dotDrustev25:0,dotDrustev24:0,hist:[]},
+  {liga:2,ime:'Portorož',   skupaj25:227398.78,skupaj24:116165.21,dotProracun25:34115.51,dotProracun24:25765.12,dotFund25:0,dotFund24:0,donacije25:59390.72,donacije24:30883.09,clanarine25:200,clanarine24:380,prodaja25:133692.55,prodaja24:45251.23,prodajaBlago25:0,prodajaBlago24:0,ostali25:0,ostali24:13885.77,pridobitna25:0,pridobitna24:0,dotDrustev25:0,dotDrustev24:0,hist:[]},
 ];
 
 const CAT_DEFS=[
@@ -525,13 +582,116 @@ function navigateKlub(dir){
 }
 
 // ---- TABS ----
+let zgMetric='skupaj';
 function showTab(name,btn){
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
   document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
   btn.classList.add('active');document.getElementById(name).classList.add('active');
   const showCats=name==='struktura'||name==='primerjava';
   document.getElementById('cat-section').style.display=showCats?'block':'none';
-  ({pregled:renderPregled,struktura:renderStruktura,primerjava:renderPrimerjava,klub:renderKlub})[name]();
+  ({pregled:renderPregled,struktura:renderStruktura,primerjava:renderPrimerjava,klub:renderKlub,zgodovina:renderZgodovina})[name]();
+}
+
+function zgSetMetric(metric,btn){
+  zgMetric=metric;
+  document.querySelectorAll('#zg-metric-btns button').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderZgodovina();
+}
+
+// ---- ZGODOVINA ----
+const ZG_COLORS=['#3266ad','#d85a30','#1d9e75','#ba7517','#533ab7','#e24b4a','#888780','#2d7a44','#a32d2d','#6b3fa0'];
+const ZG_LABELS={skupaj:'Skupni prihodki',pridobitna:'Pridobitna dejavnost',dotProracun:'Dotacije proračun',donacije:'Donacije'};
+
+function getKlubTimeline(k, metric){
+  // build sorted array of {leto, val}
+  const points=[];
+  (k.hist||[]).forEach(h=>points.push({leto:h.leto,val:h[metric]||0}));
+  // 2024 and 2025 from main fields
+  const m24=metric+'24', m25=metric+'25';
+  if(k[m24]!==undefined) points.push({leto:2024,val:k[m24]||0});
+  if(k[m25]!==undefined) points.push({leto:2025,val:k[m25]||0});
+  return points.sort((a,b)=>a.leto-b.leto);
+}
+
+function renderZgodovina(){
+  // only clubs with hist data
+  const withHist=klubi.filter(k=>k.hist&&k.hist.length>0);
+  if(!withHist.length){
+    document.getElementById('chart-zgodovina').closest('.chart-wrap').style.display='none';
+    document.getElementById('table-zgodovina').innerHTML='<tbody><tr><td colspan="5" style="text-align:center;color:var(--muted);padding:2rem">Med izbranimi klubi ni nobenega s historičnimi podatki.<br>Izberite klube: Triglav, Helios, Podčetrtek, Ilirija, Šenčur, Šentjur, Rogaška, Laško ali Idrija.</td></tr></tbody>';
+    return;
+  }
+  document.getElementById('chart-zgodovina').closest('.chart-wrap').style.display='block';
+
+  // collect all years
+  const allYears=new Set();
+  withHist.forEach(k=>getKlubTimeline(k,zgMetric).forEach(p=>allYears.add(p.leto)));
+  const years=[...allYears].sort((a,b)=>a-b);
+
+  dc('chart-zgodovina');
+  charts['chart-zgodovina']=new Chart(document.getElementById('chart-zgodovina'),{
+    type:'line',
+    data:{
+      labels:years.map(String),
+      datasets:withHist.map((k,i)=>{
+        const timeline=getKlubTimeline(k,zgMetric);
+        const data=years.map(y=>{
+          const pt=timeline.find(p=>p.leto===y);
+          return pt?pt.val:null;
+        });
+        const col=ZG_COLORS[i%ZG_COLORS.length];
+        return{
+          label:k.ime,data,
+          borderColor:col,backgroundColor:col+'22',
+          borderWidth:2.5,pointRadius:5,pointHoverRadius:7,
+          fill:false,tension:0.3,spanGaps:false,
+        };
+      })
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      interaction:{mode:'index',intersect:false},
+      plugins:{
+        legend:{position:'bottom',labels:{font:{size:12},boxWidth:14,padding:14},
+          onClick:(e,item,legend)=>{
+            const ci=legend.chart;
+            const meta=ci.getDatasetMeta(item.datasetIndex);
+            meta.hidden=!meta.hidden;
+            ci.update();
+          }
+        },
+        tooltip:{callbacks:{label:ctx=>`${ctx.dataset.label}: ${fmtK(ctx.parsed.y)}`}}
+      },
+      scales:{
+        x:{ticks:{font:{size:12}}},
+        y:{ticks:{callback:v=>fmtK(v),font:{size:11}},beginAtZero:false}
+      }
+    }
+  });
+
+  // summary table — rows = clubs, cols = years
+  const metricLabel=ZG_LABELS[zgMetric]||zgMetric;
+  const ths=`<tr><th style="text-align:left">Klub</th>${years.map(y=>`<th>${y}</th>`).join('')}<th>Rast 22→25</th></tr>`;
+  const rows=withHist.map(k=>{
+    const timeline=getKlubTimeline(k,zgMetric);
+    const byYear={};timeline.forEach(p=>byYear[p.leto]=p.val);
+    const vals=years.map(y=>byYear[y]);
+    const first=vals.find(v=>v!=null&&v>0);
+    const last=vals.filter(v=>v!=null).pop();
+    const growth=first&&last&&first!==last?((last-first)/first*100).toFixed(1):null;
+    const tds=years.map(y=>{
+      const v=byYear[y];
+      if(v==null) return`<td style="color:var(--hint)">—</td>`;
+      return`<td data-raw="${v}">${fmt(v)}</td>`;
+    }).join('');
+    const gTd=growth!=null
+      ?`<td class="${cls(parseFloat(growth))}">${sign(parseFloat(growth))}${growth}%</td>`
+      :`<td style="color:var(--hint)">—</td>`;
+    return`<tr><td>${k.ime}${ligaBadge(k.liga)}</td>${tds}${gTd}</tr>`;
+  }).join('');
+  document.getElementById('table-zgodovina').innerHTML=`
+    <thead>${ths}</thead><tbody>${rows}</tbody>`;
 }
 
 // ---- PREGLED ----
