@@ -608,7 +608,7 @@ let hiddenCats=new Set();
 
 // ---- HELPERS ----
 const fmt=v=>v===0?'—':v.toLocaleString('sl-SI',{minimumFractionDigits:2,maximumFractionDigits:2});
-const fmtK=v=>(v/1000).toFixed(1)+' k€';
+const fmtK=v=>v>=1000000?(v/1000000).toLocaleString('sl-SI',{minimumFractionDigits:3,maximumFractionDigits:3})+' M€':(v/1000).toFixed(1)+' k€';
 const sign=d=>d>=0?'+':'';
 const cls=d=>d>=0?'pos':'neg';
 const pct=(a,b)=>b>0?((a-b)/b*100).toFixed(1):'—';
@@ -619,12 +619,20 @@ function animateCount(el,target,prefix,suffix,duration){
   if(!el)return;
   duration=duration||700;prefix=prefix||'';suffix=suffix||'';
   const start=performance.now();
-  const isFloat=target%1!==0;
   function step(now){
     const p=Math.min((now-start)/duration,1);
     const ease=1-Math.pow(1-p,3);
     const val=target*ease;
-    el.textContent=prefix+(isFloat?val.toLocaleString('sl-SI',{minimumFractionDigits:1,maximumFractionDigits:1}):Math.round(val).toLocaleString('sl-SI'))+suffix;
+    // use fmtK for euro values (suffix contains €), plain number otherwise
+    let display;
+    if(suffix==='k€'||suffix==='M€'){
+      display=prefix+fmtK(val);
+    } else if(suffix==='%'){
+      display=prefix+val.toFixed(1)+'%';
+    } else {
+      display=prefix+val.toFixed(1)+suffix;
+    }
+    el.textContent=display;
     if(p<1) requestAnimationFrame(step);
   }
   requestAnimationFrame(step);
@@ -883,10 +891,10 @@ function renderPregled(){
     <div class="metric"><div class="metric-label">Povp. na klub</div><div class="metric-value" id="pm-avg">—</div><div class="metric-sub">2025</div></div>
     <div class="metric"><div class="metric-label">Največji klub</div><div class="metric-value" style="font-size:16px">${[...klubi].sort((a,b)=>b.skupaj25-a.skupaj25)[0].ime}</div><div class="metric-sub">${fmtK([...klubi].sort((a,b)=>b.skupaj25-a.skupaj25)[0].skupaj25)}</div></div>`;
   setTimeout(()=>{
-    animateCount(document.getElementById('pm-t25'),t25/1000,'','k€');
-    animateCount(document.getElementById('pm-t24'),t24/1000,'','k€');
-    animateCount(document.getElementById('pm-pr'),pr25/1000,'','k€');
-    animateCount(document.getElementById('pm-avg'),(t25/klubi.length)/1000,'','k€');
+    animateCount(document.getElementById('pm-t25'),t25,'','k€');
+    animateCount(document.getElementById('pm-t24'),t24,'','k€');
+    animateCount(document.getElementById('pm-pr'),pr25,'','k€');
+    animateCount(document.getElementById('pm-avg'),t25/klubi.length,'','k€');
   },50);
 
   // per-liga comparison strip
@@ -961,8 +969,8 @@ function renderStruktura(){
     <div class="str-hero-num"><div class="str-hero-label">Največji vir</div><div class="str-hero-val" style="font-size:18px">${catTotals.sort((a,b)=>b.tot-a.tot)[0]?.label||'—'}</div><div class="str-hero-sub">${fmtK(catTotals.sort((a,b)=>b.tot-a.tot)[0]?.tot||0)}</div></div>
     <canvas class="str-mini-pie" id="mini-pie" role="img" aria-label="Mini tortni prikaz">Struktura kategorij.</canvas>`;
   setTimeout(()=>{
-    animateCount(document.getElementById('sh-t'),t25/1000,'','k€');
-    animateCount(document.getElementById('sh-p'),pr25/1000,'','k€');
+    animateCount(document.getElementById('sh-t'),t25,'','k€');
+    animateCount(document.getElementById('sh-p'),pr25,'','k€');
     dc('mini-pie');
     const mpc=document.getElementById('mini-pie');
     if(mpc) charts['mini-pie']=new Chart(mpc,{type:'doughnut',
@@ -1227,10 +1235,10 @@ function renderKlub(){
   </details>`;
 
   setTimeout(()=>{
-    animateCount(document.getElementById('anim-skupaj'),k.skupaj25/1000,'','k€');
-    animateCount(document.getElementById('anim-delta'),Math.abs(d)/1000,d>=0?'+':'-','k€');
-    animateCount(document.getElementById('anim-prid'),k.pridobitna25/1000,'','k€');
-    animateCount(document.getElementById('anim-don'),k.donacije25/1000,'','k€');
+    animateCount(document.getElementById('anim-skupaj'),k.skupaj25,'','k€');
+    animateCount(document.getElementById('anim-delta'),Math.abs(d),d>=0?'+':'-','k€');
+    animateCount(document.getElementById('anim-prid'),k.pridobitna25,'','k€');
+    animateCount(document.getElementById('anim-don'),k.donacije25,'','k€');
     const setGauge=(arcId,pctId,g)=>{
       const arc=document.getElementById(arcId);
       if(arc){arc.style.transition='none';arc.setAttribute('d','M 15 70 A 55 55 0 0 1 15 70');
